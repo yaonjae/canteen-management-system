@@ -1,0 +1,1 @@
+export type CredentialsType = { username:string; password:string; role:"admin" | "cashier"; id:number}
