@@ -1,5 +1,6 @@
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { adminRouter } from "./routers/admin";
+import { categoryRouter } from "./routers/category";
 
 /**
  * This is the primary router for your server.
@@ -7,7 +8,8 @@ import { adminRouter } from "./routers/admin";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  admin:adminRouter
+  admin:adminRouter,
+  category:categoryRouter
 });
 
 // export type definition of API
