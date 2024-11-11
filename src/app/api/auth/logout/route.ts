@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 
 export async function POST() {
+  console.log('test');
+  
   // Clear the session cookie by setting it to a past date
   const response = NextResponse.json({ message: 'Logout successful' });
   response.cookies.set('session-token', '', {
