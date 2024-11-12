@@ -18,8 +18,7 @@ import { SidebarItem } from "../../lib/types/sidebar"
 
 const items: SidebarItem[] = [
     { title: "Dashboard", url: "#", icon: LayoutDashboard },
-    { title: "Products", url: "#", icon: Package },
-    { title: "Add Products", url: "/admin/add-items", icon: PackagePlus },
+    { title: "Products", url: "/admin/products", icon: Package },
     { title: "Category", url: "/admin/category", icon: ListCollapse },
     { title: "Transaction", url: "#", icon: ArrowLeftRight },
     { title: "Sales", url: "#", icon: ChartNoAxesCombined },

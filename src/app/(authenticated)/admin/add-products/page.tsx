@@ -31,6 +31,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { api } from "@/trpc/react"
 import { useToast } from "@/hooks/use-toast"
 import { getFormattedDate } from "@/lib/utils";
+import { useRouter } from 'next/navigation'
 
 const formSchema = z.object({
     name: z.string().min(1, { message: "Product name is required." }),
@@ -42,6 +43,7 @@ const formSchema = z.object({
 });
 
 export default function AddItem() {
+    const router = useRouter()
     const [categories] = api.category.getCategories.useSuspenseQuery();
     const { toast } = useToast();
     const form = useForm<z.infer<typeof formSchema>>({
@@ -97,7 +99,7 @@ export default function AddItem() {
     return (
         <Card className="max-w-3xl mx-auto py-5">
             <CardHeader>
-                <CardTitle>Product</CardTitle>
+                <CardTitle>Add Product</CardTitle>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -175,6 +177,7 @@ export default function AddItem() {
                                 </FormItem>
                             )}
                         />
+                        <Button variant='outline' type="button" onClick={() => router.push('/admin/products')}>Cancel</Button>&nbsp;
                         <Button type="submit">Submit</Button>
                     </form>
                 </Form>
