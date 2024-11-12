@@ -63,7 +63,7 @@ model Product {
     status      product_status
     createdAt   DateTime       @default(now())
     updatedAt   DateTime       @updatedAt
-    Category    Category       @relation(fields: [category_id], references: [id], onDelete: Cascade)
+    Category    Category       @relation(fields: [category_id], references: [id])
     Orders      Orders[]
 }
 

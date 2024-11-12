@@ -1,4 +1,5 @@
 "use client"
+import { useState } from "react";
 import {
     toast
 } from "sonner"
@@ -20,30 +21,92 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Pencil, Plus, Trash2 } from "lucide-react"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
+import { getFormattedDate } from "@/lib/utils";
 
 export default function Category() {
     const utils = api.useUtils();
     const [name, setName] = useState('');
+    const [editId, setEditId] = useState<number | null>(null);
     const [categories] = api.category.getCategories.useSuspenseQuery();
+    const { toast } = useToast()
 
     const createCategory = api.category.create.useMutation({
         onSuccess: async () => {
             await utils.category.invalidate();
-            toast.success("Category created successfully!");
+            toast({
+                title: "Category created successfully!",
+                description: getFormattedDate(),
+            })
             setName('');
         },
         onError: () => {
-            toast.error("Failed to submit Category. Please try again.");
+            toast({
+                variant: "destructive",
+                title: "Failed to submit Category. Please try again.",
+                description: getFormattedDate(),
+            })
+        }
+    });
+
+    const updateCategory = api.category.updateCategory.useMutation({
+        onSuccess: async () => {
+            await utils.category.invalidate();
+            toast({
+                title: "Category updated successfully!",
+                description: getFormattedDate(),
+            })
+            setName('');
+            setEditId(null);
+        },
+        onError: () => {
+            toast({
+                variant: "destructive",
+                title: "Failed to update Category. Please try again.",
+                description: getFormattedDate(),
+            })
+        }
+    });
+
+    const deleteCategory = api.category.deleteCategory.useMutation({
+        onSuccess: async () => {
+            await utils.category.invalidate();
+            toast({
+                title: "Category deleted successfully!",
+                description: getFormattedDate(),
+            })
+        },
+        onError: () => {
+            toast({
+                variant: "destructive",
+                title: "Failed to delete Category. Please try again.",
+                description: getFormattedDate(),
+            })
         }
     });
 
     const handleSubmit = () => {
         if (name.trim()) {
-            createCategory.mutate({ name: name });
+            if (editId) {
+                updateCategory.mutate({ id: editId, name: name });
+            } else {
+                createCategory.mutate({ name: name });
+            }
         } else {
-            toast.error("Category name cannot be empty.");
+            toast({
+                variant: "destructive",
+                title: "Category name cannot be empty.",
+            })
         }
+    };
+
+    const handleEdit = (categoryId: number, categoryName: string) => {
+        setEditId(categoryId);
+        setName(categoryName);
+    };
+
+    const handleDelete = (categoryId: number) => {
+        deleteCategory.mutate({ id: categoryId });
     };
 
     return (
@@ -54,12 +117,14 @@ export default function Category() {
             <CardContent className="space-y-4">
                 <div className="flex items-center justify-start gap-2">
                     <Label className="w-28">Category Name:</Label>
-                    <Input 
-                        className="w-72" 
+                    <Input
+                        className="w-72"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                     />
-                    <Button onClick={handleSubmit}><Plus /></Button>
+                    <Button onClick={handleSubmit}>
+                        {editId ? "Update" : <Plus />}
+                    </Button>
                 </div>
                 <Table>
                     <TableHeader>
@@ -74,7 +139,10 @@ export default function Category() {
                             <TableRow key={category.id}>
                                 <TableCell>{category.id}</TableCell>
                                 <TableCell>{category.name}</TableCell>
-                                <TableCell className="flex gap-2"><Pencil size={15} /><Trash2 size={15} color="red" /></TableCell>
+                                <TableCell className="flex gap-2">
+                                    <Pencil size={15} onClick={() => handleEdit(category.id, category.name)} />
+                                    <Trash2 size={15} color="red" onClick={() => handleDelete(category.id)} />
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

@@ -1,5 +1,5 @@
 'use client'
-import { LayoutDashboard, PackagePlus, Package, ListCollapse, PackageSearch, ArrowLeftRight, ChartNoAxesCombined, CircleUser, Users, ChevronDown, UserPen, LogOut } from "lucide-react"
+import { LayoutDashboard, Package, ListCollapse, ArrowLeftRight, ChartNoAxesCombined, CircleUser, Users, ChevronDown, UserPen, LogOut } from "lucide-react"
 import {
     Sidebar,
     SidebarContent,
@@ -14,11 +14,11 @@ import {
 import { useStore } from "@/lib/store/app"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import axios from "axios"
-import { SidebarItem } from "../types/sidebar"
+import { SidebarItem } from "../../lib/types/sidebar"
 
 const items: SidebarItem[] = [
     { title: "Dashboard", url: "#", icon: LayoutDashboard },
-    { title: "Items", url: "#", icon: Package },
+    { title: "Products", url: "#", icon: Package },
     { title: "Category", url: "#", icon: ListCollapse },
     { title: "Transaction", url: "#", icon: ArrowLeftRight },
     { title: "Sales", url: "#", icon: ChartNoAxesCombined },
@@ -26,7 +26,7 @@ const items: SidebarItem[] = [
     { title: "Customer", url: "#", icon: Users },
 ];
 
-export function AppSidebar() {
+export function CashierSidebar() {
     const { user } = useStore()
     
     const logout = async () => {

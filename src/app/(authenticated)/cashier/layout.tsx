@@ -1,13 +1,15 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/app/_components/admin-sidebar"
+import { CashierSidebar } from "@/app/_components/cashier-sidebar"
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     return (
         <SidebarProvider>
-            <AppSidebar />
+            <CashierSidebar />
             <main>
                 <SidebarTrigger />
-                {children}
+                <div className="px-10">
+                    {children}
+                </div>
             </main>
         </SidebarProvider>
     )

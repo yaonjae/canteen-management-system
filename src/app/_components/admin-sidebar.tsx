@@ -1,5 +1,5 @@
 'use client'
-import { LayoutDashboard, PackagePlus, Package, ListCollapse, PackageSearch, ArrowLeftRight, ChartNoAxesCombined, CircleUser, Users, ChevronDown, UserPen, LogOut } from "lucide-react"
+import { LayoutDashboard, PackagePlus, Package, ListCollapse, ArrowLeftRight, ChartNoAxesCombined, CircleUser, Users, ChevronDown, UserPen, LogOut } from "lucide-react"
 import {
     Sidebar,
     SidebarContent,
@@ -14,21 +14,20 @@ import {
 import { useStore } from "@/lib/store/app"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import axios from "axios"
-import { SidebarItem } from "../types/sidebar"
+import { SidebarItem } from "../../lib/types/sidebar"
 
 const items: SidebarItem[] = [
     { title: "Dashboard", url: "#", icon: LayoutDashboard },
-    { title: "Items", url: "#", icon: Package },
-    { title: "Add Items", url: "/admin/add-items", icon: PackagePlus },
+    { title: "Products", url: "#", icon: Package },
+    { title: "Add Products", url: "/admin/add-items", icon: PackagePlus },
     { title: "Category", url: "/admin/category", icon: ListCollapse },
-    { title: "Manage Items", url: "#", icon: PackageSearch },
     { title: "Transaction", url: "#", icon: ArrowLeftRight },
     { title: "Sales", url: "#", icon: ChartNoAxesCombined },
     { title: "Employee", url: "#", icon: CircleUser },
     { title: "Customer", url: "#", icon: Users },
 ];
 
-export function AppSidebar() {
+export function AdminSidebar() {
     const { user } = useStore()
 
     const logout = async () => {

@@ -1,8 +1,5 @@
 "use client"
 import {
-    toast
-} from "sonner"
-import {
     useForm
 } from "react-hook-form"
 import {
@@ -10,15 +7,11 @@ import {
 } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import {
-    cn
-} from "@/lib/utils"
-import {
     Button
 } from "@/components/ui/button"
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -36,38 +29,70 @@ import {
 } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { api } from "@/trpc/react"
+import { useToast } from "@/hooks/use-toast"
+import { getFormattedDate } from "@/lib/utils";
 
 const formSchema = z.object({
-    name: z.string(),
-    category: z.number(),
-    amount: z.string(),
-    image: z.string()
+    name: z.string().min(1, { message: "Product name is required." }),
+    category: z.number().min(1, { message: "Category is required." }),
+    amount: z.string().min(1, { message: "Price is required." }),
+    image: z
+        .instanceof(File, { message: "Image is required." })
+        .refine(file => file.size > 0, { message: "Please upload an image file." }),
 });
 
 export default function AddItem() {
     const [categories] = api.category.getCategories.useSuspenseQuery();
+    const { toast } = useToast();
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: "",
             category: 0,
             amount: "",
-            image: ""
+            image: undefined,
+        },
+    });
+
+    const createProduct = api.product.create.useMutation({
+        onSuccess: () => {
+            toast({
+                title: "Product created successfully!",
+                description: getFormattedDate(),
+            });
+            window.location.reload();
+        },
+        onError: () => {
+            toast({
+                variant: "destructive",
+                title: "Failed to create product. Please try again.",
+                description: getFormattedDate(),
+            })
+        },
+    });
+
+    const handleFileUpload = async (file: File) => {
+        const reader = new FileReader();
+        return new Promise<string>((resolve, reject) => {
+            reader.onloadend = () => {
+                resolve(reader.result as string);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+        if (values.image && values.image instanceof File) {
+            const imageBase64 = await handleFileUpload(values.image);
+            createProduct.mutate({
+                name: values.name,
+                category: values.category,
+                amount: parseFloat(values.amount),
+                image: imageBase64,
+            });
         }
-    })
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        try {
-            console.log(values);
-            toast(
-                <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-                    <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-                </pre>
-            );
-        } catch (error) {
-            console.error("Form submission error", error);
-            toast.error("Failed to submit the form. Please try again.");
-        }
-    }
+    };
 
     return (
         <Card className="max-w-3xl mx-auto py-5">
@@ -99,7 +124,7 @@ export default function AddItem() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Category:</FormLabel>
-                                    <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value.toString()}>
+                                    <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value.toString()} value={field.value.toString()}>
                                         <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="" />
@@ -111,7 +136,6 @@ export default function AddItem() {
                                             ))}
                                         </SelectContent>
                                     </Select>
-
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -144,7 +168,8 @@ export default function AddItem() {
                                             placeholder=""
                                             type="file"
                                             accept="image/*"
-                                            {...field} />
+                                            onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
