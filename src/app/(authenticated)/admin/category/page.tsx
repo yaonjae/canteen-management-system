@@ -1,9 +1,6 @@
 "use client"
 import { useState } from "react";
 import {
-    toast
-} from "sonner"
-import {
     Button
 } from "@/components/ui/button"
 import {
@@ -135,16 +132,24 @@ export default function Category() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {categories.map((category) => (
-                            <TableRow key={category.id}>
-                                <TableCell>{category.id}</TableCell>
-                                <TableCell>{category.name}</TableCell>
-                                <TableCell className="flex gap-2">
-                                    <Pencil size={15} onClick={() => handleEdit(category.id, category.name)} />
-                                    <Trash2 size={15} color="red" onClick={() => handleDelete(category.id)} />
+                        {categories.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={3} className="text-center">
+                                    No categories available.
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        ) : (
+                            categories.map((category) => (
+                                <TableRow key={category.id}>
+                                    <TableCell>{category.id}</TableCell>
+                                    <TableCell>{category.name}</TableCell>
+                                    <TableCell className="flex gap-2">
+                                        <Pencil size={15} onClick={() => handleEdit(category.id, category.name)} />
+                                        <Trash2 size={15} color="red" onClick={() => handleDelete(category.id)} />
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </CardContent>

@@ -20,9 +20,9 @@ const items: SidebarItem[] = [
     { title: "Dashboard", url: "#", icon: LayoutDashboard },
     { title: "Products", url: "/admin/products", icon: Package },
     { title: "Category", url: "/admin/category", icon: ListCollapse },
-    { title: "Transaction", url: "#", icon: ArrowLeftRight },
+    { title: "Transaction", url: "/admin/transactions", icon: ArrowLeftRight },
     { title: "Sales", url: "#", icon: ChartNoAxesCombined },
-    { title: "Employee", url: "#", icon: CircleUser },
+    { title: "Employee", url: "/admin/employees", icon: CircleUser },
     { title: "Customer", url: "#", icon: Users },
 ];
 
