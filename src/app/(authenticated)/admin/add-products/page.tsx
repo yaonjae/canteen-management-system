@@ -31,7 +31,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { api } from "@/trpc/react"
 import { useToast } from "@/hooks/use-toast"
 import { getFormattedDate } from "@/lib/utils";
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect } from "react"
 
 const formSchema = z.object({
     name: z.string().min(1, { message: "Product name is required." }),
@@ -46,6 +47,13 @@ export default function AddItem() {
     const router = useRouter()
     const [categories] = api.category.getCategories.useSuspenseQuery();
     const { toast } = useToast();
+    const searchParams = useSearchParams();
+    const productId = searchParams.get('id');
+    const { data: product } = api.product.getProductById.useQuery(
+        { id: Number(productId) },
+        { enabled: Boolean(productId) }
+    );
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -62,7 +70,7 @@ export default function AddItem() {
                 title: "Product created successfully!",
                 description: getFormattedDate(),
             });
-            window.location.reload();
+            router.push('/admin/products');
         },
         onError: () => {
             toast({
@@ -70,6 +78,23 @@ export default function AddItem() {
                 title: "Failed to create product. Please try again.",
                 description: getFormattedDate(),
             })
+        },
+    });
+
+    const updateProduct = api.product.update.useMutation({
+        onSuccess: () => {
+            toast({
+                title: "Product updated successfully!",
+                description: getFormattedDate(),
+            });
+            router.push('/admin/products');
+        },
+        onError: () => {
+            toast({
+                variant: "destructive",
+                title: "Failed to update product. Please try again.",
+                description: getFormattedDate(),
+            });
         },
     });
 
@@ -85,21 +110,43 @@ export default function AddItem() {
     };
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        if (values.image && values.image instanceof File) {
-            const imageBase64 = await handleFileUpload(values.image);
-            createProduct.mutate({
-                name: values.name,
-                category: values.category,
-                amount: parseFloat(values.amount),
-                image: imageBase64,
+        const imageBase64 = values.image instanceof File
+        ? await handleFileUpload(values.image)
+        : "";
+        
+        const parsedValues = {
+            ...values,
+            amount: parseFloat(values.amount),
+            image: imageBase64,
+        };
+
+        if (productId) {
+            await updateProduct.mutateAsync({
+                id: Number(productId),
+                ...parsedValues,
+            });
+        } else {
+            await createProduct.mutateAsync({
+                ...parsedValues,
             });
         }
     };
 
+    useEffect(() => {
+        if (product) {
+            form.reset({
+                name: product.name,
+                category: product.category_id,
+                amount: product.amount.toString(),
+                image: undefined,
+            });
+        }
+    }, [product, form]);
+
     return (
         <Card className="max-w-3xl mx-auto py-5">
             <CardHeader>
-                <CardTitle>Add Product</CardTitle>
+                <CardTitle>{productId ? "Edit " : "Add "}Product</CardTitle>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
