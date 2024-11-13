@@ -23,7 +23,7 @@ const items: SidebarItem[] = [
     { title: "Transaction", url: "/admin/transactions", icon: ArrowLeftRight },
     { title: "Sales", url: "#", icon: ChartNoAxesCombined },
     { title: "Employee", url: "/admin/employees", icon: CircleUser },
-    { title: "Customer", url: "#", icon: Users },
+    { title: "Customer", url: "/admin/customer", icon: Users },
 ];
 
 export function AdminSidebar() {
