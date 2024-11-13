@@ -1,12 +1,8 @@
 "use client"
 import { useState } from "react";
-import {
-    Button
-} from "@/components/ui/button"
-import {
-    Input
-} from "@/components/ui/input"
-import { api } from "@/trpc/react"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { api } from "@/trpc/react";
 import {
     Table,
     TableBody,
@@ -14,19 +10,22 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Pencil, Plus, Trash2 } from "lucide-react"
-import { Label } from "@/components/ui/label"
-import { useToast } from "@/hooks/use-toast"
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { getFormattedDate } from "@/lib/utils";
+import DeleteDialog from '@/app/_components/delete-dialog'
 
 export default function Category() {
     const utils = api.useUtils();
     const [name, setName] = useState('');
     const [editId, setEditId] = useState<number | null>(null);
     const [categories] = api.category.getCategories.useSuspenseQuery();
-    const { toast } = useToast()
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
+    const { toast } = useToast();
 
     const createCategory = api.category.create.useMutation({
         onSuccess: async () => {
@@ -34,7 +33,7 @@ export default function Category() {
             toast({
                 title: "Category created successfully!",
                 description: getFormattedDate(),
-            })
+            });
             setName('');
         },
         onError: () => {
@@ -42,8 +41,8 @@ export default function Category() {
                 variant: "destructive",
                 title: "Failed to submit Category. Please try again.",
                 description: getFormattedDate(),
-            })
-        }
+            });
+        },
     });
 
     const updateCategory = api.category.updateCategory.useMutation({
@@ -52,7 +51,7 @@ export default function Category() {
             toast({
                 title: "Category updated successfully!",
                 description: getFormattedDate(),
-            })
+            });
             setName('');
             setEditId(null);
         },
@@ -61,8 +60,8 @@ export default function Category() {
                 variant: "destructive",
                 title: "Failed to update Category. Please try again.",
                 description: getFormattedDate(),
-            })
-        }
+            });
+        },
     });
 
     const deleteCategory = api.category.deleteCategory.useMutation({
@@ -71,15 +70,15 @@ export default function Category() {
             toast({
                 title: "Category deleted successfully!",
                 description: getFormattedDate(),
-            })
+            });
         },
         onError: () => {
             toast({
                 variant: "destructive",
                 title: "Failed to delete Category. Please try again.",
                 description: getFormattedDate(),
-            })
-        }
+            });
+        },
     });
 
     const handleSubmit = () => {
@@ -93,7 +92,7 @@ export default function Category() {
             toast({
                 variant: "destructive",
                 title: "Category name cannot be empty.",
-            })
+            });
         }
     };
 
@@ -102,8 +101,17 @@ export default function Category() {
         setName(categoryName);
     };
 
-    const handleDelete = (categoryId: number) => {
-        deleteCategory.mutate({ id: categoryId });
+    const handleDeleteClick = (categoryId: number) => {
+        setCategoryToDelete(categoryId);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (categoryToDelete !== null) {
+            deleteCategory.mutate({ id: categoryToDelete });
+            setIsDeleteDialogOpen(false);
+            setCategoryToDelete(null);
+        }
     };
 
     return (
@@ -145,7 +153,7 @@ export default function Category() {
                                     <TableCell>{category.name}</TableCell>
                                     <TableCell className="flex gap-2">
                                         <Pencil size={15} onClick={() => handleEdit(category.id, category.name)} />
-                                        <Trash2 size={15} color="red" onClick={() => handleDelete(category.id)} />
+                                        <Trash2 size={15} color="red" onClick={() => handleDeleteClick(category.id)} />
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -153,6 +161,12 @@ export default function Category() {
                     </TableBody>
                 </Table>
             </CardContent>
+            <DeleteDialog
+                isOpen={isDeleteDialogOpen}
+                selection="Category"
+                onConfirm={confirmDelete}
+                onCancel={() => setIsDeleteDialogOpen(false)}
+            />
         </Card>
-    )
+    );
 }
