@@ -1,5 +1,6 @@
 "use client"
 import {
+    useEffect,
     useState
 } from "react"
 import {
@@ -27,39 +28,98 @@ import {
     Input
 } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import { api } from "@/trpc/react"
+import { useToast } from "@/hooks/use-toast"
+import { getFormattedDate } from "@/lib/utils";
 
 const formSchema = z.object({
-    first_name: z.string(),
-    last_name: z.string(),
-    username: z.string(),
-    password: z.string()
+    first_name: z.string().min(1, "First name is required"),
+    last_name: z.string().min(1, "Last name is required"),
+    username: z.string().min(1, "Username is required"),
+    password: z.string().min(5, "Password must be at least 5 characters"),
 });
 
 export default function AddEmployee() {
     const router = useRouter()
+    const { toast } = useToast();
+    const searchParams = useSearchParams();
+    const employeeId = searchParams.get('id');
+    const { data: employee } = api.employee.getEmployeeById.useQuery(
+        { id: Number(employeeId) },
+        { enabled: Boolean(employeeId) }
+    );
+    
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
+        defaultValues: {
+            last_name: "",
+            first_name: "",
+            username: "",
+            password: "",
+        },
     })
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        try {
-            console.log(values);
-            toast(
-                <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-                    <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-                </pre>
-            );
-        } catch (error) {
-            console.error("Form submission error", error);
-            toast.error("Failed to submit the form. Please try again.");
+    const createEmployee = api.employee.create.useMutation({
+        onSuccess: () => {
+            toast({
+                title: "Employee created successfully!",
+                description: getFormattedDate(),
+            });
+            router.push('/admin/employees');
+        },
+        onError: () => {
+            toast({
+                variant: "destructive",
+                title: "Failed to create employee. Please try again.",
+                description: getFormattedDate(),
+            })
+        },
+    });
+
+    const updateEmployee = api.employee.update.useMutation({
+        onSuccess: () => {
+            toast({
+                title: "Employee updated successfully!",
+                description: getFormattedDate(),
+            });
+            router.push('/admin/employees');
+        },
+        onError: () => {
+            toast({
+                variant: "destructive",
+                title: "Failed to update employee. Please try again.",
+                description: getFormattedDate(),
+            });
+        },
+    });
+
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+        if (employeeId) {
+            await updateEmployee.mutateAsync({
+                id: Number(employeeId),
+                ...values,
+            });
+        } else {
+            await createEmployee.mutateAsync(values);
         }
-    }
+    };
+
+    useEffect(() => {
+        if (employee) {
+            form.reset({
+                last_name: employee.last_name,
+                first_name: employee.first_name,
+                username: employee.username,
+                password: employee.password,
+            });
+        }
+    }, [employee, form]);
 
     return (
         <Card className="max-w-3xl mx-auto py-5">
             <CardHeader>
-                <CardTitle>Add Employee</CardTitle>
+                <CardTitle>{employeeId ? "Edit " : "Add "}Employee</CardTitle>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
