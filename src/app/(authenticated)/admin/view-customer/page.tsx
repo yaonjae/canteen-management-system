@@ -5,9 +5,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { api } from "@/trpc/react"
 import { useRouter } from 'next/navigation'
 import React from 'react'
-import { DatePickerWithRange } from "@/components/ui/datePickerWithRange" 
+import { DatePickerWithRange } from "@/components/ui/datePickerWithRange"
 import { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
+import { endOfDay } from 'date-fns'
 
 const ViewCustomer = () => {
     const router = useRouter()
@@ -25,7 +26,10 @@ const ViewCustomer = () => {
                     <DatePickerWithRange
                         className="w-[300px]"
                         dateRange={dateRange}
-                        onDateChange={setDateRange}
+                        onDateChange={(e) => setDateRange({
+                            from: e?.from,
+                            to: e?.to ? endOfDay(e.to) : undefined,
+                        })}
                     />
                 </div>
                 <Table>

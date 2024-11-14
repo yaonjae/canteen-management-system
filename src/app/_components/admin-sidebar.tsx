@@ -3,6 +3,7 @@ import { LayoutDashboard, PackagePlus, Package, ListCollapse, ArrowLeftRight, Ch
 import {
     Sidebar,
     SidebarContent,
+    SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
     SidebarHeader,
@@ -15,19 +16,21 @@ import { useStore } from "@/lib/store/app"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import axios from "axios"
 import { SidebarItem } from "../../lib/types/sidebar"
+import { useRouter } from "next/navigation"
 
 const items: SidebarItem[] = [
     { title: "Dashboard", url: "#", icon: LayoutDashboard },
     { title: "Products", url: "/admin/products", icon: Package },
     { title: "Category", url: "/admin/category", icon: ListCollapse },
     { title: "Transaction", url: "/admin/transactions", icon: ArrowLeftRight },
-    { title: "Sales", url: "#", icon: ChartNoAxesCombined },
+    { title: "Sales", url: "/admin/sales", icon: ChartNoAxesCombined },
     { title: "Employee", url: "/admin/employees", icon: CircleUser },
     { title: "Customer", url: "/admin/customer", icon: Users },
 ];
 
 export function AdminSidebar() {
     const { user } = useStore()
+    const router = useRouter()
 
     const logout = async () => {
         await axios.post("/api/auth/logout");
@@ -39,24 +42,9 @@ export function AdminSidebar() {
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <SidebarMenuButton>
-                                    <p className="uppercase font-bold">{user?.username}</p>
-                                    <ChevronDown className="ml-auto" />
-                                </SidebarMenuButton>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem>
-                                    <UserPen />
-                                    <span>Profile</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={logout}>
-                                    <LogOut />
-                                    <span>Logout</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <SidebarMenuButton onClick={() => router.push('/')}>
+                            <p className="uppercase font-bold">{user?.username}</p>
+                        </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
@@ -79,6 +67,17 @@ export function AdminSidebar() {
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
+            <SidebarSeparator />
+            <SidebarFooter className="pb-3">
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton onClick={logout}>
+                            <LogOut />
+                            <span>Logout</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarFooter>
         </Sidebar>
     );
 }

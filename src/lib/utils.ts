@@ -25,3 +25,7 @@ export default function formatDate(date: Date | string) {
       day: '2-digit',
   });
 }
+
+export function formatCurrency(amount: number) {
+  return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
+}

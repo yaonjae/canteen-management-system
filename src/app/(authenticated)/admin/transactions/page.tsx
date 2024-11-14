@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { api } from "@/trpc/react"
 import React, { useEffect } from 'react'
-import formatDate from '@/lib/utils'
+import formatDate, { formatCurrency } from '@/lib/utils'
 import { DatePickerWithRange } from '@/components/ui/datePickerWithRange'
 import { DateRange } from 'react-day-picker'
 import {
@@ -40,7 +40,6 @@ const formSchema = z.object({
 });
 
 const Employees = () => {
-    // const [transactions] = api.transaction.getTransactions.useSuspenseQuery();
     const [dateRange, setDateRange] = React.useState<DateRange | undefined>()
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -71,7 +70,7 @@ const Employees = () => {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>ID</TableHead>
-                                <TableHead>Name</TableHead>
+                                <TableHead>Cashier Name</TableHead>
                                 <TableHead>Order No.</TableHead>
                                 <TableHead>Amount</TableHead>
                                 <TableHead>Payment Mode</TableHead>
@@ -92,7 +91,7 @@ const Employees = () => {
                                         <TableCell>{transaction.cashier_id}</TableCell>
                                         <TableCell>{transaction.Cashier.last_name}, {transaction.Cashier.first_name}</TableCell>
                                         <TableCell>{transaction.id}</TableCell>
-                                        <TableCell>{transaction.total_cost}</TableCell>
+                                        <TableCell>{formatCurrency(transaction.total_cost)}</TableCell>
                                         <TableCell>{transaction.transaction_type}</TableCell>
                                         <TableCell>{formatDate(transaction.createdAt)}</TableCell>
                                         <TableCell>{transaction.is_fully_paid ? 'PAID' : 'UNPAID'}</TableCell>

@@ -116,7 +116,7 @@ const Products = () => {
                 ) : filteredProducts?.length === 0 ? (
                     <div className="text-center text-gray-500 py-10">No products available</div>
                 ) : (
-                    <div className="flex flex-wrap gap-4 justify-evenly">
+                    <div className="flex flex-wrap gap-2 justify-evenly">
                         {filteredProducts?.map((product) => (
                             <Card className="w-56" key={product.id}>
                                 <CardContent className="pt-5 space-y-3">
