@@ -1,4 +1,5 @@
 'use client'
+import DeleteDialog from '@/app/_components/delete-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -6,11 +7,63 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { api } from "@/trpc/react"
 import { Logs, Pencil, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { useToast } from "@/hooks/use-toast";
+import { getFormattedDate } from "@/lib/utils";
 
 const Customer = () => {
     const router = useRouter()
-    const [customers] = api.customer.getCustomers.useSuspenseQuery();
+    const { toast } = useToast();
+    const { data: customers, refetch } = api.customer.getCustomers.useQuery();
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+    };
+
+    const filteredCustomer = customers?.filter((customer) =>
+        customer.last_name.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+
+    const handleEdit = (id: string) => {
+        router.push(`/admin/add-customer?id=${id}`);
+    };
+
+    const handleDelete = (id: string) => {
+        setSelectedId(id);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (selectedId !== null) {
+            deleteCustomer.mutate({ id: selectedId });
+            setIsDeleteDialogOpen(false);
+            setSelectedId(null);
+        }
+    };
+
+    const deleteCustomer = api.customer.delete.useMutation({
+        onSuccess: () => {
+            toast({
+                title: "Employee deleted successfully!",
+                description: getFormattedDate(),
+            });
+            refetch();
+        },
+        onError: () => {
+            toast({
+                variant: "destructive",
+                title: "Failed to delete employee. Please try again.",
+                description: getFormattedDate(),
+            });
+        },
+    });
+
+    useEffect(() => {
+        refetch();
+    }, []);
 
     return (
         <Card className="max-w-4xl mx-auto py-5">
@@ -19,7 +72,7 @@ const Customer = () => {
             </CardHeader>
             <CardContent className='space-y-4'>
                 <div className='flex justify-between items-center'>
-                    <Input placeholder='Search name' className='w-64' />
+                    <Input placeholder='Search name' className='w-64' value={searchQuery} onChange={handleSearchChange} />
                     <Button onClick={() => router.push('/admin/add-customer')}>ADD</Button>
                 </div>
                 <Table>
@@ -32,22 +85,22 @@ const Customer = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {customers.length === 0 ? (
+                        {filteredCustomer?.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={4} className="text-center">
                                     No customer available.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            customers.map((customer) => (
+                            filteredCustomer?.map((customer) => (
                                 <TableRow key={customer.id}>
                                     <TableCell>{customer.id}</TableCell>
                                     <TableCell>{customer.last_name}, {customer.first_name}</TableCell>
                                     <TableCell>{customer.contact_number}</TableCell>
                                     <TableCell className='flex gap-4'>
                                         <Logs size={15} onClick={() => router.push('/admin/view-customer')} />
-                                        <Pencil size={15} />
-                                        <Trash2 size={15} color='red' />
+                                        <Pencil size={15} onClick={() => handleEdit(customer.id)} />
+                                        <Trash2 size={15} color='red' onClick={() => handleDelete(customer.id)} />
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -55,6 +108,12 @@ const Customer = () => {
                     </TableBody>
                 </Table>
             </CardContent>
+            <DeleteDialog
+                isOpen={isDeleteDialogOpen}
+                selection="Customer"
+                onConfirm={confirmDelete}
+                onCancel={() => setIsDeleteDialogOpen(false)}
+            />
         </Card>
     )
 }

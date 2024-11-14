@@ -35,7 +35,7 @@ model Cashier {
 }
 
 model Customer {
-    id             Int      @id
+    id             String      @id
     first_name     String
     last_name      String
     contact_number String?
@@ -78,7 +78,7 @@ model Orders {
 
 model Transaction {
     id                Int                 @id @default(autoincrement())
-    customer_id       Int?
+    customer_id       String?
     cashier_id        Int
     transaction_type  transaction_type
     total_cost        Float
@@ -103,7 +103,7 @@ model PaymentRecordList {
 
 model PaymentRecord {
     id              Int                 @id @default(autoincrement())
-    customer_id     Int
+    customer_id     String
     amount          Float
     createdAt       DateTime            @default(now())
     Customer        Customer            @relation(fields: [customer_id], references: [id], onDelete: Cascade)

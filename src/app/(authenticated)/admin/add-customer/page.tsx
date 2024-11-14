@@ -1,5 +1,6 @@
 "use client"
 import {
+    useEffect,
     useState
 } from "react"
 import {
@@ -27,9 +28,13 @@ import {
     Input
 } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import { api } from "@/trpc/react"
+import { useToast } from "@/hooks/use-toast"
+import { getFormattedDate } from "@/lib/utils"
 
 const formSchema = z.object({
+    id: z.string(),
     first_name: z.string(),
     last_name: z.string(),
     contact_number: z.string()
@@ -37,32 +42,103 @@ const formSchema = z.object({
 
 export default function AddCustomer() {
     const router = useRouter()
+    const { toast } = useToast();
+    const searchParams = useSearchParams();
+    const customerId = searchParams.get('id');
+    const { data: customer } = api.customer.getCustomerById.useQuery(
+        { id: String(customerId) },
+        { enabled: Boolean(customerId) }
+    );
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
+        defaultValues: {
+            id: '',
+            last_name: '',
+            first_name: '',
+            contact_number: '',
+        }
     })
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        try {
-            console.log(values);
-            toast(
-                <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-                    <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-                </pre>
-            );
-        } catch (error) {
-            console.error("Form submission error", error);
-            toast.error("Failed to submit the form. Please try again.");
+    const createCustomer = api.customer.create.useMutation({
+        onSuccess: () => {
+            toast({
+                title: "Customer created successfully!",
+                description: getFormattedDate(),
+            });
+            router.push('/admin/customer');
+        },
+        onError: () => {
+            toast({
+                variant: "destructive",
+                title: "Failed to create customer. Please try again.",
+                description: getFormattedDate(),
+            })
+        },
+    });
+
+    const updateCustomer = api.customer.update.useMutation({
+        onSuccess: () => {
+            toast({
+                title: "Customer updated successfully!",
+                description: getFormattedDate(),
+            });
+            router.push('/admin/customer');
+        },
+        onError: () => {
+            toast({
+                variant: "destructive",
+                title: "Failed to update customer. Please try again.",
+                description: getFormattedDate(),
+            });
+        },
+    });
+
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+        if (customerId) {
+            await updateCustomer.mutateAsync(values);
+        } else {
+            await createCustomer.mutateAsync(values);
         }
-    }
+    };
+
+    useEffect(() => {
+        if (customer) {
+            form.reset({
+                id: customer.id,
+                last_name: customer.last_name,
+                first_name: customer.first_name,
+                contact_number: customer.contact_number ?? '',
+            });
+        }
+    }, [customer, form]);
 
     return (
         <Card className="max-w-3xl mx-auto py-5">
             <CardHeader>
-                <CardTitle>Add Customer</CardTitle>
+                <CardTitle>{customerId ? "Edit " : "Add "}Customer</CardTitle>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="id"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>ID:</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            placeholder=""
+                                            disabled={!!customerId}
+                                            type=""
+                                            {...field} />
+                                    </FormControl>
+
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <div className="grid grid-cols-12 gap-4">
                             <div className="col-span-6">
                                 <FormField
