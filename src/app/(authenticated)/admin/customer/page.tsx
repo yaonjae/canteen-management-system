@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { api } from "@/trpc/react"
-import { Logs, Pencil, Trash2 } from 'lucide-react'
+import { Pencil, ShoppingCart, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import { useToast } from "@/hooks/use-toast";
@@ -98,7 +98,7 @@ const Customer = () => {
                                     <TableCell>{customer.last_name}, {customer.first_name}</TableCell>
                                     <TableCell>{customer.contact_number}</TableCell>
                                     <TableCell className='flex gap-4'>
-                                        <Logs size={15} onClick={() => router.push('/admin/view-customer')} />
+                                        <ShoppingCart size={15} onClick={() => router.push('/admin/view-customer')} />
                                         <Pencil size={15} onClick={() => handleEdit(customer.id)} />
                                         <Trash2 size={15} color='red' onClick={() => handleDelete(customer.id)} />
                                     </TableCell>

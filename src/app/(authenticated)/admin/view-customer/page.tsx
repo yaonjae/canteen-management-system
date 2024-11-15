@@ -38,7 +38,7 @@ const ViewCustomer = () => {
                             <TableHead>Order ID</TableHead>
                             <TableHead>Date</TableHead>
                             <TableHead>Total</TableHead>
-                            <TableHead>Payment Method</TableHead>
+                            <TableHead>Payment Mode</TableHead>
                             <TableHead>Status</TableHead>
                         </TableRow>
                     </TableHeader>

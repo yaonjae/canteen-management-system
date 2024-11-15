@@ -19,7 +19,7 @@ import { SidebarItem } from "../../lib/types/sidebar"
 import { useRouter } from "next/navigation"
 
 const items: SidebarItem[] = [
-    { title: "Dashboard", url: "#", icon: LayoutDashboard },
+    { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
     { title: "Products", url: "/admin/products", icon: Package },
     { title: "Category", url: "/admin/category", icon: ListCollapse },
     { title: "Transaction", url: "/admin/transactions", icon: ArrowLeftRight },

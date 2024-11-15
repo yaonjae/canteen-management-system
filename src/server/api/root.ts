@@ -5,6 +5,7 @@ import { productRouter } from "./routers/product";
 import { transactionRouter } from "./routers/transaction";
 import { employeeRouter } from "./routers/employee";
 import { customerRouter } from "./routers/customer";
+import { dashboardRouter } from "./routers/dashboard";
 
 /**
  * This is the primary router for your server.
@@ -17,7 +18,8 @@ export const appRouter = createTRPCRouter({
   product:productRouter,
   transaction:transactionRouter,
   employee:employeeRouter,
-  customer:customerRouter
+  customer:customerRouter,
+  dashboard:dashboardRouter
 });
 
 // export type definition of API
