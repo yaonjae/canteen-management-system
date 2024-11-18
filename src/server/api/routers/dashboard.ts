@@ -24,8 +24,12 @@ export const dashboardRouter = createTRPCRouter({
                 },
                 take: 5,
                 include: {
-                    Transaction: true,
-                    Product: true
+                    Transaction: {
+                        include: {
+                            Cashier: true,
+                        }
+                    },
+                    Product: true,
                 },
             }),
             ctx.db.customer.count(),
