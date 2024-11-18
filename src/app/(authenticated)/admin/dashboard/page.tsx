@@ -10,9 +10,12 @@ import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 
 const Dashboard = () => {
-    const [dashboardData] = api.dashboard.getDashboardData.useSuspenseQuery();
-    const { transactions, orders, customerCount, productCount, overallSales, monthlySales } = dashboardData;
     const router = useRouter()
+    const { data: dashboardData } = api.dashboard.getDashboardData.useQuery();
+    if (!dashboardData) {
+        return null;
+    }
+    const { transactions, orders, customerCount, productCount, overallSales, monthlySales } = dashboardData;
 
     const getCurrentMonth = () => {
         const date = new Date();

@@ -49,8 +49,8 @@ import { exit } from "process";
 const Cashier = () => {
   const { user } = useStore()
   const { toast } = useToast();
-  const [categories] = api.category.getCategories.useSuspenseQuery();
-  const [customers] = api.cashier.getCustomer.useSuspenseQuery();
+  const {data: categories } = api.category.getCategories.useQuery();
+  const { data: customers } = api.cashier.getCustomer.useQuery();
   const {
     data: products,
     isLoading,
@@ -251,7 +251,7 @@ const Cashier = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {categories.map((category) => (
+                  {categories?.map((category) => (
                     <SelectItem
                       key={category.id}
                       value={category.id.toString()}
@@ -354,7 +354,7 @@ const Cashier = () => {
                           className="justify-between w-full"
                         >
                           {value
-                            ? `${customers.find((customer) => customer.id === value)?.id} | ${customers.find((customer) => customer.id === value)?.last_name}, ${customers.find((customer) => customer.id === value)?.first_name}`
+                            ? `${customers?.find((customer) => customer.id === value)?.id} | ${customers?.find((customer) => customer.id === value)?.last_name}, ${customers?.find((customer) => customer.id === value)?.first_name}`
                             : "Select Customer"}
                           <ChevronsUpDown className="opacity-50" />
                         </Button>
@@ -365,7 +365,7 @@ const Cashier = () => {
                           <CommandList>
                             <CommandEmpty>No framework found.</CommandEmpty>
                             <CommandGroup>
-                              {customers.map((customer) => (
+                              {customers?.map((customer) => (
                                 <CommandItem
                                   key={customer.id}
                                   value={customer.id}

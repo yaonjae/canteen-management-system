@@ -22,7 +22,7 @@ export default function Category() {
     const utils = api.useUtils();
     const [name, setName] = useState('');
     const [editId, setEditId] = useState<number | null>(null);
-    const [categories] = api.category.getCategories.useSuspenseQuery();
+    const { data: categories } = api.category.getCategories.useQuery();
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
     const { toast } = useToast();
@@ -115,7 +115,7 @@ export default function Category() {
     };
 
     return (
-        <Card className="max-w-3xl mx-auto py-5">
+        <Card className="max-w-3xl py-5 mx-auto">
             <CardHeader>
                 <CardTitle>Category</CardTitle>
             </CardHeader>
@@ -140,14 +140,14 @@ export default function Category() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {categories.length === 0 ? (
+                        {categories?.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={3} className="text-center">
                                     No categories available.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            categories.map((category) => (
+                            categories?.map((category) => (
                                 <TableRow key={category.id}>
                                     <TableCell>{category.id}</TableCell>
                                     <TableCell>{category.name}</TableCell>

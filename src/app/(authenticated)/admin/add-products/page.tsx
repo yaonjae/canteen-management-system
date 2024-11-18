@@ -45,7 +45,7 @@ const formSchema = z.object({
 
 export default function AddItem() {
     const router = useRouter()
-    const [categories] = api.category.getCategories.useSuspenseQuery();
+    const { data: categories } = api.category.getCategories.useQuery();
     const { toast } = useToast();
     const searchParams = useSearchParams();
     const productId = searchParams.get('id');
@@ -144,7 +144,7 @@ export default function AddItem() {
     }, [product, form]);
 
     return (
-        <Card className="max-w-3xl mx-auto py-5">
+        <Card className="max-w-3xl py-5 mx-auto">
             <CardHeader>
                 <CardTitle>{productId ? "Edit " : "Add "}Product</CardTitle>
             </CardHeader>
@@ -180,7 +180,7 @@ export default function AddItem() {
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {categories.map((category) => (
+                                            {categories?.map((category) => (
                                                 <SelectItem key={category.id} value={category.id.toString()}>{category.name}</SelectItem>
                                             ))}
                                         </SelectContent>

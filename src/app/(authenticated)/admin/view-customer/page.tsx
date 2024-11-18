@@ -12,16 +12,16 @@ import { endOfDay } from 'date-fns'
 
 const ViewCustomer = () => {
     const router = useRouter()
-    const [customers] = api.customer.getCustomers.useSuspenseQuery();
+    const { data: customers } = api.customer.getCustomers.useQuery();
     const [dateRange, setDateRange] = React.useState<DateRange | undefined>()
 
     return (
-        <Card className="max-w-4xl mx-auto py-5">
+        <Card className="max-w-4xl py-5 mx-auto">
             <CardHeader>
                 <CardTitle>Order History</CardTitle>
             </CardHeader>
             <CardContent className='space-y-4'>
-                <div className='flex justify-start items-center'>
+                <div className='flex items-center justify-start'>
                     <Label className='w-32'>Date Range:</Label>
                     <DatePickerWithRange
                         className="w-[300px]"
