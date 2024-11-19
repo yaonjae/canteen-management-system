@@ -15,6 +15,7 @@ const config = {
   "rules": {
     "@typescript-eslint/array-type": "off",
     "@typescript-eslint/no-floating-promises": "off",
+    "@typescript-eslint/only-throw-error": "off",
     "@typescript-eslint/no-unused-expressions": "off",
     "@typescript-eslint/consistent-type-definitions": "off",
     "@typescript-eslint/no-unsafe-return":"off",

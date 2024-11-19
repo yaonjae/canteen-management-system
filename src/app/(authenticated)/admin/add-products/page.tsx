@@ -32,7 +32,8 @@ import { api } from "@/trpc/react"
 import { useToast } from "@/hooks/use-toast"
 import { getFormattedDate } from "@/lib/utils";
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { uploadImage } from "@/app/helper/upload"
 
 const formSchema = z.object({
     name: z.string().min(1, { message: "Product name is required." }),
@@ -109,15 +110,24 @@ export default function AddItem() {
         });
     };
 
+    const _uploadImage = async (file: File | undefined) => {
+        if (file) {
+            return await uploadImage(file)
+        } else {
+            return ''
+        }
+    }
+
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        const imageBase64 = values.image instanceof File
-        ? await handleFileUpload(values.image)
-        : "";
+        let image_url = '';
+        if (values.image) {
+            image_url = await _uploadImage(values.image)
+        }
         
         const parsedValues = {
             ...values,
             amount: parseFloat(values.amount),
-            image: imageBase64,
+            image: image_url,
         };
 
         if (productId) {
