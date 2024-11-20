@@ -83,6 +83,51 @@ export const customerRouter = createTRPCRouter({
                 where: { id: input.id },
             });
         }),
+    getCustomerCredit: publicProcedure
+        .input(z.object({ id: z.string() }))
+        .query(async ({ ctx, input }) => {
+            const order = await ctx.db.transaction.findMany({
+                where: {
+                    customer_id: input.id,
+                    is_fully_paid: false,
+                },
+                include: {
+                    Orders: true,
+                    PaymentRecordList: true,
+                    Customer: true,
+                }
+            });
+
+            const total_cost = await ctx.db.transaction.aggregate({
+                where: {
+                    customer_id: input.id,
+                    is_fully_paid: false,
+                    transaction_type: 'CREDIT',
+                },
+                _sum: {
+                    total_cost: true,
+                    total_paid: true
+                },
+            })
+
+            const history = await ctx.db.transaction.findMany({
+                where: {
+                    customer_id: input.id,
+                    is_fully_paid: true
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            })
+
+            const total = (total_cost?._sum.total_cost || 0)-(total_cost?._sum.total_paid || 0)
+
+            return {
+                order,
+                total_cost: total,
+                history
+            }
+        }),
     delete: publicProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ ctx, input }) => {

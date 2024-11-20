@@ -94,7 +94,7 @@ const Sales = () => {
             </Card>
             <Card className='flex-none'>
                 <CardHeader className='bg-slate-100 rounded-t'>
-                    <CardTitle>Overview</CardTitle>
+                    <CardTitle className='text-lg'>Overview</CardTitle>
                     <CardDescription>{dateRange ? formattedDateRange : ''}</CardDescription>
                 </CardHeader>
                 <CardContent className='w-96 space-y-2 pt-5'>
@@ -112,7 +112,7 @@ const Sales = () => {
                     </div>
                     <Separator className="my-4" />
                     <div className='flex justify-between items-center text-sm'>
-                        <p className='font-bold'>Total Cost</p>
+                        <p className='font-bold'>Total</p>
                         <p>{formatCurrency(overviewData?.totalcost || 0)}</p>
                     </div>
                 </CardContent>

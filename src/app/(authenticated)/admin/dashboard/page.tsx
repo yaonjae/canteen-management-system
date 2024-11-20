@@ -59,21 +59,20 @@ const Dashboard = () => {
                 </Card>
             </div>
             <Card>
-                <CardHeader className='rounded-t bg-slate-100'>
-                    <div className='flex items-center justify-between'>
+                <CardHeader className='rounded-t bg-slate-100 flex flex-row justify-between items-center'>
+                    <div>
                         <CardTitle className='text-base'>Customer Credit List</CardTitle>
-                        <Button size={'sm'} onClick={() => router.push('/admin/transactions')}><ArrowLeftRight /></Button>
+                        <CardDescription>Overview of the latest credit transactions</CardDescription>
                     </div>
-                    <CardDescription>Overview of the latest credit transactions</CardDescription>
+                    <Button size={'sm'} onClick={() => router.push('/admin/transactions')}><ArrowLeftRight /></Button>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Cashier Name</TableHead>
-                                <TableHead>Amount</TableHead>
-                                <TableHead>Payment Mode</TableHead>
-                                <TableHead>Status</TableHead>
+                                <TableHead>Total Cost</TableHead>
+                                <TableHead>Total Paid</TableHead>
                                 <TableHead>Date</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -88,9 +87,8 @@ const Dashboard = () => {
                                 transactions?.map((transaction) => (
                                     <TableRow key={transaction.id}>
                                         <TableCell>{transaction.Cashier.last_name}, {transaction.Cashier.first_name}</TableCell>
-                                        <TableCell>{formatCurrency(transaction.total_cost - transaction.total_paid)}</TableCell>
-                                        <TableCell>{transaction.transaction_type}</TableCell>
-                                        <TableCell>{transaction.is_fully_paid ? 'PAID' : 'UNPAID'}</TableCell>
+                                        <TableCell>{formatCurrency(transaction.total_cost)}</TableCell>
+                                        <TableCell>{formatCurrency(transaction.total_paid)}</TableCell>
                                         <TableCell>{formatDate(transaction.createdAt)}</TableCell>
                                     </TableRow>
                                 ))

@@ -112,7 +112,7 @@ const Customer = () => {
                                     <TableCell>{customer.last_name}, {customer.first_name}</TableCell>
                                     <TableCell>{customer.contact_number}</TableCell>
                                     <TableCell className='flex gap-4'>
-                                        <ShoppingCart size={15} onClick={() => router.push('/admin/view-customer')} />
+                                        <ShoppingCart size={15} onClick={() => router.push(`/admin/view-customer?id=${customer.id}`)} />
                                         <Pencil size={15} onClick={() => handleEdit(customer.id)} />
                                         <Trash2 size={15} color='red' onClick={() => handleDelete(customer.id)} />
                                     </TableCell>
