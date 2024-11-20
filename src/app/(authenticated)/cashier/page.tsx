@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { LogOut, Minus, Plus } from "lucide-react";
+import { LoaderCircle, LogOut, Minus, Plus } from "lucide-react";
 import { api } from "@/trpc/react";
 import CardLoaderCashier from "@/app/_components/card-loader-cashier";
 import { useRouter } from "next/navigation";
@@ -44,7 +44,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { exit } from "process";
 
 const Cashier = () => {
   const { user } = useStore()
@@ -57,6 +56,7 @@ const Cashier = () => {
     refetch,
   } = api.cashier.getProducts.useQuery();
   const [searchQuery, setSearchQuery] = useState("");
+  const [loader, setLoader] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [cashReceived, setCashReceived] = useState<number | "">(0);
   const [change, setChange] = useState<number>(0);
@@ -115,6 +115,7 @@ const Cashier = () => {
       });
       orderSummary.clear();
       setPaymentMode('CASH');
+      setLoader(false);
     },
     onError: () => {
       toast({
@@ -122,6 +123,7 @@ const Cashier = () => {
         title: "Failed to create order. Please try again.",
         description: getFormattedDate(),
       })
+      setLoader(false);
     },
   });
 
@@ -198,13 +200,15 @@ const Cashier = () => {
       }
     );
 
+    setLoader(true);
+
     const payload = {
       cashierId: user?.id ?? 0,
-      customerId: value ?? undefined,
       transactionType: paymentMode as "CASH" | "CREDIT",
       totalCost: totalAmount,
       totalPaid: cashReceived || 0,
       orders: orderDetails,
+      ...(paymentMode === "CREDIT" && { customerId: value }),
     };
 
     await createOrder.mutateAsync({
@@ -413,7 +417,7 @@ const Cashier = () => {
                 </div>
                 <div className="flex justify-end gap-2 pt-4">
                   <Button variant="destructive" onClick={clearOrderSummary}>Cancel</Button>
-                  <Button onClick={() => onSubmit()}>Checkout</Button>
+                  <Button onClick={() => onSubmit()}>{loader ? <><LoaderCircle className="animate-spin" /><span>Loading...</span></> : 'Checkout'}</Button>
                 </div>
               </div>
             ) : (

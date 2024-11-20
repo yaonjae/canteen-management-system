@@ -6,7 +6,7 @@ export const cashierRouter = createTRPCRouter({
         .input(
             z.object({
                 cashierId: z.number(),
-                customerId: z.string().optional(),
+                customerId: z.string().optional().nullable(),
                 transactionType: z.enum(["CASH", "CREDIT"]),
                 totalCost: z.number(),
                 totalPaid: z.number(),
