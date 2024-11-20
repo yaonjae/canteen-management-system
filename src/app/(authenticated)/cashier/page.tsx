@@ -48,7 +48,7 @@ import {
 const Cashier = () => {
   const { user } = useStore()
   const { toast } = useToast();
-  const {data: categories } = api.category.getCategories.useQuery();
+  const {data: categories } = api.product.getCategories.useQuery();
   const { data: customers } = api.cashier.getCustomer.useQuery();
   const {
     data: products,

@@ -28,16 +28,32 @@ export const productRouter = createTRPCRouter({
             return newProduct;
         }),
 
-    getProducts: publicProcedure.query(async ({ ctx }) => {
-        return ctx.db.product.findMany({
-            include: {
-                Category: true,
-            },
-            orderBy: {
-                name: 'asc',
-            }
+    getCategories: publicProcedure.query(async ({ ctx }) => {
+        const post = await ctx.db.category.findMany({
+            orderBy: { name: "asc" },
         });
+        return post ?? null;
     }),
+
+    getProducts: publicProcedure
+        .input(z.object({ page: z.number().min(1), pageSize: z.number().min(1) }))
+        .query(async ({ ctx, input }) => {
+            const { page, pageSize } = input;
+            const products = await ctx.db.product.findMany({
+                skip: (page - 1) * pageSize,
+                take: pageSize,
+                include: {
+                    Category: true,
+                },
+                orderBy: {
+                    name: 'asc',
+                },
+            });
+
+            const totalProducts = await ctx.db.product.count();
+
+            return { products, totalProducts };
+        }),
 
     update: publicProcedure
         .input(

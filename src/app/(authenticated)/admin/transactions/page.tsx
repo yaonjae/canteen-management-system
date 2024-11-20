@@ -29,6 +29,7 @@ import {
 import {
     zodResolver
 } from "@hookform/resolvers/zod"
+import PaginationComponent from '@/app/_components/pagination'
 
 const formSchema = z.object({
     transaction_type: z.string(),
@@ -39,8 +40,10 @@ const formSchema = z.object({
     })
 });
 
-const Employees = () => {
-    const [dateRange, setDateRange] = React.useState<DateRange | undefined>()
+const Transactions = () => {
+    const [dateRange, setDateRange] = React.useState<DateRange | undefined>();
+    const [currentPage, setCurrentPage] = React.useState(1);
+    const itemsPerPage = 10;
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -49,23 +52,27 @@ const Employees = () => {
         },
     });
 
-    const { data: transactions } = api.transaction.getTransactions.useQuery(form.watch(), {
-        enabled: true,
-    });
+    const formData = form.watch();
 
-    const formData = form.watch()
+    const { data: transactionData } = api.transaction.getTransactions.useQuery({
+        ...formData,
+        skip: (currentPage - 1) * itemsPerPage,
+        take: itemsPerPage,
+    });
 
     React.useEffect(() => {
         form.setValue("date_range", dateRange ? { from: dateRange.from ?? null, to: dateRange.to ?? null } : { from: null, to: null });
     }, [dateRange, form]);
 
+    const totalPages = Math.ceil((transactionData?.totalRecords || 0) / itemsPerPage);
+
     return (
         <div className="mx-auto py-5 flex space-x-4 items-start">
-            <Card className='flex-1'>
+            <Card className="flex-1">
                 <CardHeader>
                     <CardTitle>Transactions</CardTitle>
                 </CardHeader>
-                <CardContent className='space-y-4'>
+                <CardContent className="space-y-4">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -79,14 +86,14 @@ const Employees = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {transactions?.length === 0 ? (
+                            {transactionData?.transactions?.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center">
                                         No transactions available.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                transactions?.map((transaction) => (
+                                transactionData?.transactions?.map((transaction) => (
                                     <TableRow key={transaction.id}>
                                         <TableCell>{transaction.cashier_id}</TableCell>
                                         <TableCell>{transaction.Cashier.last_name}, {transaction.Cashier.first_name}</TableCell>
@@ -100,12 +107,19 @@ const Employees = () => {
                             )}
                         </TableBody>
                     </Table>
+                    {totalPages > 1 && (
+                        <PaginationComponent
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
+                    )}
                 </CardContent>
             </Card>
             <Card className="flex-none">
-                <CardContent className='pt-5'>
+                <CardContent className="pt-5">
                     <Form {...form}>
-                        <form className='space-y-5'>
+                        <form className="space-y-5">
                             <FormField
                                 control={form.control}
                                 name="transaction_type"
@@ -169,7 +183,7 @@ const Employees = () => {
                 </CardContent>
             </Card>
         </div>
-    )
+    );
 }
 
-export default Employees
+export default Transactions

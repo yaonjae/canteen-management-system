@@ -12,7 +12,6 @@ import { endOfDay } from 'date-fns'
 
 const ViewCustomer = () => {
     const router = useRouter()
-    const { data: customers } = api.customer.getCustomers.useQuery();
     const [dateRange, setDateRange] = React.useState<DateRange | undefined>()
 
     return (

@@ -3,33 +3,21 @@ import { startOfMonth, endOfMonth } from "date-fns";
 
 export const dashboardRouter = createTRPCRouter({
     getDashboardData: publicProcedure.query(async ({ ctx }) => {
-        const [transactions, orders, customerCount, productCount, overallSalesResult, monthlySalesResult] = await Promise.all([
+        const [transactions, customerCount, productCount, overallSalesResult, monthlySalesResult] = await Promise.all([
             ctx.db.transaction.findMany({
+                where: {
+                    is_fully_paid: false,
+                    transaction_type: 'CREDIT'
+                },
                 orderBy: {
                     createdAt: 'desc',
                 },
-                take: 10,
+                take: 8,
                 include: {
                     Cashier: true,
                     Customer: true,
                     Orders: true,
                     PaymentRecordList: true,
-                },
-            }),
-            ctx.db.orders.findMany({
-                orderBy: {
-                    Transaction: {
-                        createdAt: 'desc'
-                    }
-                },
-                take: 5,
-                include: {
-                    Transaction: {
-                        include: {
-                            Cashier: true,
-                        }
-                    },
-                    Product: true,
                 },
             }),
             ctx.db.customer.count(),
@@ -65,7 +53,6 @@ export const dashboardRouter = createTRPCRouter({
 
         return {
             transactions,
-            orders,
             customerCount,
             productCount,
             overallSales,

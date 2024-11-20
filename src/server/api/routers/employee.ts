@@ -3,15 +3,42 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 
 export const employeeRouter = createTRPCRouter({
-  getEmployees: publicProcedure.query(async ({ ctx }) => {
-    return ctx.db.cashier.findMany({
+  getEmployees: publicProcedure.input(
+    z.object({
+      searchQuery: z.string().optional(),
+      skip: z.number().optional(),
+      take: z.number().optional(),
+    })
+  ).query(async ({ ctx, input }) => {
+    const filters: any = {};
+
+    if (input.searchQuery) {
+      filters.last_name = {
+        contains: input.searchQuery,
+        mode: "insensitive",
+      };
+    }
+
+    const employees = await ctx.db.cashier.findMany({
+      where: filters,
       include: {
         Transaction: true,
       },
       orderBy: {
         last_name: "asc",
       },
+      skip: input.skip,
+      take: input.take,
     });
+
+    const totalRecords = await ctx.db.cashier.count({
+      where: filters,
+    });
+
+    return {
+      employees,
+      totalRecords,
+    };
   }),
   create: publicProcedure
     .input(

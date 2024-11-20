@@ -4,27 +4,40 @@ import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { api } from "@/trpc/react"
 import { useRouter } from 'next/navigation'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { DatePickerWithRange } from "@/components/ui/datePickerWithRange"
 import { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
 import formatDate, { formatCurrency } from '@/lib/utils'
 import { endOfDay, format } from 'date-fns'
 import { Separator } from '@/components/ui/separator'
+import PaginationComponent from '@/app/_components/pagination'
 
 const Sales = () => {
     const router = useRouter()
-    const [dateRange, setDateRange] = React.useState<DateRange | undefined>()
+    const [dateRange, setDateRange] = useState<DateRange | undefined>()
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 10
 
-    const { data: { transaction: sales = [], totalcost = 0, totalcash = 0, totalcredit = 0 } = {} } = api.transaction.getSales.useQuery({
-        date_range: dateRange
-            ? { from: dateRange.from ?? null, to: dateRange.to ?? null }
-            : undefined,
+    // Fetch sales data with pagination (for the table)
+    const { data: { transaction: sales = [], totalcost = 0, totalcash = 0, totalcredit = 0, totalCount = 0 } = {} } = api.transaction.getSales.useQuery({
+        date_range: dateRange ? { from: dateRange.from ?? null, to: dateRange.to ?? null } : undefined,
+        page: currentPage,  // Pass current page to the query
+        itemsPerPage,       // Pass items per page
+    });
+
+    // Fetch the total data for the overview (this query should reflect all data, not paginated)
+    const { data: overviewData } = api.transaction.getSales.useQuery({
+        date_range: dateRange ? { from: dateRange.from ?? null, to: dateRange.to ?? null } : undefined,
+        page: 1,          // Request data from the first page to get totals
+        itemsPerPage: 100000, // Request a large number to ensure we get all data for totals
     });
 
     const formattedDateRange = dateRange
         ? `${dateRange.from ? format(dateRange.from, 'MMM dd, yyyy') : ''} - ${dateRange.to ? format(dateRange.to, 'MMM dd, yyyy') : ''}`
-        : 'No date selected'
+        : 'No date selected';
+
+    const totalPages = Math.ceil(totalCount / itemsPerPage);  // Calculate total pages
 
     return (
         <div className="max-w-7xl mx-auto py-5 flex space-x-4 items-start">
@@ -70,6 +83,13 @@ const Sales = () => {
                             )}
                         </TableBody>
                     </Table>
+                    {totalPages > 1 && (
+                        <PaginationComponent
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={(page) => setCurrentPage(page)} 
+                        />
+                    )}
                 </CardContent>
             </Card>
             <Card className='flex-none'>
@@ -80,25 +100,25 @@ const Sales = () => {
                 <CardContent className='w-96 space-y-2 pt-5'>
                     <div className='flex justify-between items-center text-sm'>
                         <p className='font-medium'>Transaction Count</p>
-                        <p>{dateRange?.from && dateRange?.to ? sales.length : '0'}</p>
+                        <p>{overviewData?.totalCount || 0}</p>
                     </div>
                     <div className='flex justify-between items-center text-sm'>
                         <p className='font-medium'>Total Cash</p>
-                        <p>{dateRange?.from && dateRange?.to ? totalcash : '0'}</p>
+                        <p>{overviewData?.totalcash || 0}</p>
                     </div>
                     <div className='flex justify-between items-center text-sm'>
                         <p className='font-medium'>Total Credit</p>
-                        <p>{dateRange?.from && dateRange?.to ? totalcredit : '0'}</p>
+                        <p>{overviewData?.totalcredit || 0}</p>
                     </div>
                     <Separator className="my-4" />
                     <div className='flex justify-between items-center text-sm'>
                         <p className='font-bold'>Total Cost</p>
-                        <p>{dateRange?.from && dateRange?.to ? formatCurrency(totalcost) : formatCurrency(0)}</p>
+                        <p>{formatCurrency(overviewData?.totalcost || 0)}</p>
                     </div>
                 </CardContent>
             </Card>
         </div>
-    )
+    );
 }
 
-export default Sales
+export default Sales;

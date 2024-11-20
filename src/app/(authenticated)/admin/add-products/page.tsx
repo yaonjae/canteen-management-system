@@ -46,7 +46,7 @@ const formSchema = z.object({
 
 export default function AddItem() {
     const router = useRouter()
-    const { data: categories } = api.category.getCategories.useQuery();
+    const { data: categories } = api.product.getCategories.useQuery();
     const { toast } = useToast();
     const searchParams = useSearchParams();
     const productId = searchParams.get('id');

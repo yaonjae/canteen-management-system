@@ -1,7 +1,7 @@
 'use client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { formatCurrency } from '@/lib/utils'
+import formatDate, { formatCurrency } from '@/lib/utils'
 import { api } from '@/trpc/react'
 import { ArrowLeftRight, ChartColumnIncreasing, Package, PhilippinePeso, ShoppingCart, Users } from 'lucide-react'
 import React from 'react'
@@ -15,7 +15,7 @@ const Dashboard = () => {
     if (!dashboardData) {
         return null;
     }
-    const { transactions, orders, customerCount, productCount, overallSales, monthlySales } = dashboardData;
+    const { transactions, customerCount, productCount, overallSales, monthlySales } = dashboardData;
 
     const getCurrentMonth = () => {
         const date = new Date();
@@ -23,8 +23,8 @@ const Dashboard = () => {
     }
 
     return (
-        <div className='grid grid-cols-6 gap-5 py-5 mx-auto max-w-7xl'>
-            <div className='grid grid-cols-2 col-span-3 gap-5'>
+        <div className='py-5 mx-auto max-w-6xl space-y-3'>
+            <div className='grid grid-cols-4 gap-3'>
                 <Card>
                     <CardContent className='relative pt-7'>
                         <CardTitle className='text-base'>Customers</CardTitle>
@@ -57,55 +57,16 @@ const Dashboard = () => {
                         <ChartColumnIncreasing color='white' className='absolute p-3 bg-blue-500 rounded-lg top-3 right-3 size-12' />
                     </CardContent>
                 </Card>
-                <Card className='col-span-2 h-[450px]'>
-                    <CardHeader className='rounded-t bg-slate-100'>
-                        <div className='flex items-center justify-between'>
-                            <CardTitle className='text-base'>Orders</CardTitle>
-                            <Button size={'sm'} onClick={() => router.push('/admin/customer')}><ShoppingCart /></Button>
-                        </div>
-                        <CardDescription>List of the most recent customer orders</CardDescription>
-                    </CardHeader>
-                    <CardContent className='pt-2'>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Cashier Name</TableHead>
-                                    <TableHead>Amount</TableHead>
-                                    <TableHead>Payment Mode</TableHead>
-                                    <TableHead>Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {orders.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="text-center">
-                                            No orders available.
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    orders.map((order) => (
-                                        <TableRow key={order.id}>
-                                            <TableCell>{order.Transaction.Cashier.last_name}, {order.Transaction.Cashier.first_name}</TableCell>
-                                            <TableCell>{formatCurrency(order.quantity * order.Product.amount)}</TableCell>
-                                            <TableCell>{order.Transaction.transaction_type}</TableCell>
-                                            <TableCell>{order.Transaction.is_fully_paid ? 'PAID' : 'UNPAID'}</TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
             </div>
-            <Card className='col-span-3'>
+            <Card>
                 <CardHeader className='rounded-t bg-slate-100'>
                     <div className='flex items-center justify-between'>
-                        <CardTitle className='text-base'>Transactions</CardTitle>
+                        <CardTitle className='text-base'>Customer Credit List</CardTitle>
                         <Button size={'sm'} onClick={() => router.push('/admin/transactions')}><ArrowLeftRight /></Button>
                     </div>
-                    <CardDescription>Overview of the latest financial transactions processed</CardDescription>
+                    <CardDescription>Overview of the latest credit transactions</CardDescription>
                 </CardHeader>
-                <CardContent className='pt-5'>
+                <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -113,6 +74,7 @@ const Dashboard = () => {
                                 <TableHead>Amount</TableHead>
                                 <TableHead>Payment Mode</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Date</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -126,9 +88,10 @@ const Dashboard = () => {
                                 transactions?.map((transaction) => (
                                     <TableRow key={transaction.id}>
                                         <TableCell>{transaction.Cashier.last_name}, {transaction.Cashier.first_name}</TableCell>
-                                        <TableCell>{formatCurrency(transaction.total_cost)}</TableCell>
+                                        <TableCell>{formatCurrency(transaction.total_cost - transaction.total_paid)}</TableCell>
                                         <TableCell>{transaction.transaction_type}</TableCell>
                                         <TableCell>{transaction.is_fully_paid ? 'PAID' : 'UNPAID'}</TableCell>
+                                        <TableCell>{formatDate(transaction.createdAt)}</TableCell>
                                     </TableRow>
                                 ))
                             )}

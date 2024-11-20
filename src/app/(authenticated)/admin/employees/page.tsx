@@ -17,22 +17,30 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getFormattedDate } from "@/lib/utils";
+import PaginationComponent from "@/app/_components/pagination";
 
 const Employees = () => {
   const router = useRouter();
   const { toast } = useToast();
-  const { data: employees, refetch } = api.employee.getEmployees.useQuery();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const { data: employeeData, refetch } = api.employee.getEmployees.useQuery({
+    searchQuery,
+    skip: (currentPage - 1) * itemsPerPage,
+    take: itemsPerPage,
+  });
+
+  const { employees, totalRecords } = employeeData || {};
+  const totalPages = Math.ceil((totalRecords || 0) / itemsPerPage);
+
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
-
-  const filteredEmployees = employees?.filter((employee) =>
-    employee.last_name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
 
   const handleDelete = (id: number) => {
     setSelectedId(id);
@@ -70,7 +78,7 @@ const Employees = () => {
 
   useEffect(() => {
     refetch();
-  }, []);
+  }, [currentPage]);
 
   return (
     <Card className="mx-auto max-w-4xl py-5">
@@ -81,7 +89,7 @@ const Employees = () => {
         <div className="flex items-center justify-between">
           <Input
             className="w-60"
-            placeholder="Search"
+            placeholder="Search Last Name"
             value={searchQuery}
             onChange={handleSearchChange}
           />
@@ -99,14 +107,14 @@ const Employees = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredEmployees?.length === 0 ? (
+            {employees?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center">
                   No employees available.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredEmployees?.map((employee) => (
+              employees?.map((employee) => (
                 <TableRow key={employee.id}>
                   <TableCell>{employee.id}</TableCell>
                   <TableCell>
@@ -126,6 +134,13 @@ const Employees = () => {
             )}
           </TableBody>
         </Table>
+        {totalPages > 1 && (
+          <PaginationComponent
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        )}
       </CardContent>
       <DeleteDialog
         isOpen={isDeleteDialogOpen}

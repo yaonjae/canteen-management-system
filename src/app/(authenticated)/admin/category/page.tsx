@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/trpc/react";
@@ -16,16 +16,24 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getFormattedDate } from "@/lib/utils";
-import DeleteDialog from '@/app/_components/delete-dialog'
+import DeleteDialog from '@/app/_components/delete-dialog';
+import PaginationComponent from "@/app/_components/pagination";
 
 export default function Category() {
     const utils = api.useUtils();
     const [name, setName] = useState('');
     const [editId, setEditId] = useState<number | null>(null);
-    const { data: categories } = api.category.getCategories.useQuery();
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    const { data: { categories = [], totalCount = 0 } = {} } = api.category.getCategories.useQuery({
+        page: currentPage,
+        itemsPerPage,
+    });
+
+    const { toast } = useToast();
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
-    const { toast } = useToast();
 
     const createCategory = api.category.create.useMutation({
         onSuccess: async () => {
@@ -114,6 +122,8 @@ export default function Category() {
         }
     };
 
+    const totalPages = Math.ceil(totalCount / itemsPerPage);
+
     return (
         <Card className="max-w-3xl py-5 mx-auto">
             <CardHeader>
@@ -160,6 +170,13 @@ export default function Category() {
                         )}
                     </TableBody>
                 </Table>
+                {totalPages > 1 && (
+                    <PaginationComponent
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                    />
+                )}
             </CardContent>
             <DeleteDialog
                 isOpen={isDeleteDialogOpen}

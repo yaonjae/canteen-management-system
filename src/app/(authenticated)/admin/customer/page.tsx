@@ -6,15 +6,26 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { api } from "@/trpc/react"
 import { Pencil, ShoppingCart, Trash2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import { useToast } from "@/hooks/use-toast";
 import { getFormattedDate } from "@/lib/utils";
+import PaginationComponent from '@/app/_components/pagination'
 
 const Customer = () => {
     const router = useRouter()
+    const searchParams = useSearchParams();
     const { toast } = useToast();
-    const { data: customers, refetch } = api.customer.getCustomers.useQuery();
+
+    const page = parseInt(searchParams.get('page') || '1');
+    const itemsPerPage = 10;
+
+    // Fetch customers with pagination
+    const { data: customers, refetch } = api.customer.getCustomers.useQuery({
+        page,
+        itemsPerPage,
+    });
+
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -23,7 +34,7 @@ const Customer = () => {
         setSearchQuery(e.target.value);
     };
 
-    const filteredCustomer = customers?.filter((customer) =>
+    const filteredCustomer = customers?.items.filter((customer) =>
         customer.last_name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
@@ -47,7 +58,7 @@ const Customer = () => {
     const deleteCustomer = api.customer.delete.useMutation({
         onSuccess: () => {
             toast({
-                title: "Employee deleted successfully!",
+                title: "Customer deleted successfully!",
                 description: getFormattedDate(),
             });
             refetch();
@@ -55,7 +66,7 @@ const Customer = () => {
         onError: () => {
             toast({
                 variant: "destructive",
-                title: "Failed to delete employee. Please try again.",
+                title: "Failed to delete customer. Please try again.",
                 description: getFormattedDate(),
             });
         },
@@ -63,7 +74,10 @@ const Customer = () => {
 
     useEffect(() => {
         refetch();
-    }, []);
+    }, [page]);
+
+    const totalCount = customers?.totalCount ?? 0;
+    const totalPages = Math.ceil(totalCount / itemsPerPage);
 
     return (
         <Card className="max-w-4xl mx-auto py-5">
@@ -72,7 +86,7 @@ const Customer = () => {
             </CardHeader>
             <CardContent className='space-y-4'>
                 <div className='flex justify-between items-center'>
-                    <Input placeholder='Search name' className='w-64' value={searchQuery} onChange={handleSearchChange} />
+                    <Input placeholder='Search Last Name' className='w-64' value={searchQuery} onChange={handleSearchChange} />
                     <Button onClick={() => router.push('/admin/add-customer')}>ADD</Button>
                 </div>
                 <Table>
@@ -107,6 +121,15 @@ const Customer = () => {
                         )}
                     </TableBody>
                 </Table>
+                {totalPages > 1 && (
+                    <PaginationComponent
+                        currentPage={page}
+                        totalPages={totalPages}
+                        onPageChange={(pageNumber: number) => {
+                            router.push(`/admin/customers?page=${pageNumber}`);
+                        }}
+                    />
+                )}
             </CardContent>
             <DeleteDialog
                 isOpen={isDeleteDialogOpen}
@@ -118,4 +141,4 @@ const Customer = () => {
     )
 }
 
-export default Customer
+export default Customer;

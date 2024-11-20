@@ -12,12 +12,14 @@ import { useToast } from "@/hooks/use-toast"
 import { getFormattedDate } from '@/lib/utils'
 import CardLoader from '@/app/_components/card-loader'
 import DeleteDialog from '@/app/_components/delete-dialog'
+import PaginationComponent from '@/app/_components/pagination'
 
 const Products = () => {
     const router = useRouter()
-    const { data: products, isLoading, refetch } = api.product.getProducts.useQuery()
+    const [currentPage, setCurrentPage] = useState(1)
+    const [pageSize, setPageSize] = useState(10)
+    const { data, isLoading, refetch } = api.product.getProducts.useQuery({ page: currentPage, pageSize })
     const { toast } = useToast()
-    const [isUpdating, setIsUpdating] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     const [selectedProductId, setSelectedProductId] = useState<number | null>(null)
@@ -26,7 +28,7 @@ const Products = () => {
         setSearchQuery(e.target.value)
     }
 
-    const filteredProducts = products?.filter((product) =>
+    const filteredProducts = data?.products.filter((product) =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
@@ -83,13 +85,12 @@ const Products = () => {
 
     const handleStatusChange = (productId: number, currentStatus: string) => {
         const newStatus = currentStatus === 'AVAILABLE' ? 'NOT_AVAILABLE' : 'AVAILABLE';
-        setIsUpdating(true);
         updateProductStatus.mutate({ id: productId, status: newStatus });
     };
 
     useEffect(() => {
         refetch();
-    }, [])
+    }, [currentPage, pageSize]);
 
     return (
         <Card className="max-w-5xl mx-auto py-5">
@@ -127,8 +128,8 @@ const Products = () => {
                                         <p>₱{product.amount.toFixed(2)}</p>
                                         <hr />
                                         <div className="flex justify-between items-center">
-                                            <Label htmlFor="status">{product.status != 'AVAILABLE' ? 'NOT AVAILABLE' : 'AVAILABLE'}</Label>
-                                            <Switch id="status" checked={product.status == 'AVAILABLE'} onCheckedChange={() => handleStatusChange(product.id, product.status)} />
+                                            <Label htmlFor="status">{product.status !== 'AVAILABLE' ? 'NOT AVAILABLE' : 'AVAILABLE'}</Label>
+                                            <Switch id="status" checked={product.status === 'AVAILABLE'} onCheckedChange={() => handleStatusChange(product.id, product.status)} />
                                         </div>
                                     </div>
                                 </CardContent>
@@ -139,6 +140,13 @@ const Products = () => {
                             </Card>
                         ))}
                     </div>
+                )}
+                {data?.totalProducts && Math.ceil(data.totalProducts / pageSize) > 1 && (
+                    <PaginationComponent
+                        currentPage={currentPage}
+                        totalPages={Math.ceil(data.totalProducts / pageSize)}
+                        onPageChange={setCurrentPage}
+                    />
                 )}
             </CardContent>
 

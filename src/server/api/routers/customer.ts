@@ -3,17 +3,34 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 
 export const customerRouter = createTRPCRouter({
-    getCustomers: publicProcedure.query(async ({ ctx }) => {
-        return ctx.db.customer.findMany({
-            include: {
-                Transaction: true,
-                PaymentRecord: true,
-            },
-            orderBy: {
-                last_name: 'asc',
-            }
-        });
-    }),
+    getCustomers: publicProcedure
+        .input(z.object({
+            page: z.number().min(1),
+            itemsPerPage: z.number().min(1),
+        }))
+        .query(async ({ ctx, input }) => {
+            const { page, itemsPerPage } = input;
+            const skip = (page - 1) * itemsPerPage;
+
+            const customers = await ctx.db.customer.findMany({
+                skip,
+                take: itemsPerPage,
+                include: {
+                    Transaction: true,
+                    PaymentRecord: true,
+                },
+                orderBy: {
+                    last_name: 'asc',
+                },
+            });
+
+            const totalCount = await ctx.db.customer.count();
+
+            return {
+                items: customers,
+                totalCount: totalCount || 0,
+            };
+        }),
 
     create: publicProcedure
         .input(

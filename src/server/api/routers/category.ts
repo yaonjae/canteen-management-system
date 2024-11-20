@@ -12,12 +12,28 @@ export const categoryRouter = createTRPCRouter({
                 },
             });
         }),
-    getCategories: publicProcedure.query(async ({ ctx }) => {
-        const post = await ctx.db.category.findMany({
-            orderBy: { name: "asc" },
-        });
-        return post ?? null;
-    }),
+    getCategories: publicProcedure
+        .input(z.object({
+            page: z.number().min(1),
+            itemsPerPage: z.number().min(1),
+        }))
+        .query(async ({ ctx, input }) => {
+            const { page, itemsPerPage } = input;
+            const skip = (page - 1) * itemsPerPage;
+
+            const categories = await ctx.db.category.findMany({
+                skip,
+                take: itemsPerPage,
+                orderBy: { name: "asc" },
+            });
+
+            const totalCount = await ctx.db.category.count();
+
+            return {
+                categories,
+                totalCount,
+            };
+        }),
     updateCategory: publicProcedure
         .input(z.object({ id: z.number(), name: z.string().min(1) }))
         .mutation(async ({ ctx, input }) => {
