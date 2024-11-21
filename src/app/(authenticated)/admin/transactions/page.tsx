@@ -67,7 +67,7 @@ const Transactions = () => {
     const totalPages = Math.ceil((transactionData?.totalRecords || 0) / itemsPerPage);
 
     return (
-        <div className="mx-auto py-5 flex space-x-4 items-start">
+        <div className="mx-auto py-5 max-w-7xl flex space-x-4 items-start">
             <Card className="flex-1">
                 <CardHeader>
                     <CardTitle>Transactions</CardTitle>

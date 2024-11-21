@@ -59,37 +59,35 @@ const Dashboard = () => {
                 </Card>
             </div>
             <Card>
-                <CardHeader className='rounded-t bg-slate-100 flex flex-row justify-between items-center'>
-                    <div>
-                        <CardTitle className='text-base'>Customer Credit List</CardTitle>
-                        <CardDescription>Overview of the latest credit transactions</CardDescription>
-                    </div>
-                    <Button size={'sm'} onClick={() => router.push('/admin/transactions')}><ArrowLeftRight /></Button>
+                <CardHeader className='rounded-t bg-slate-100 relative'>
+                    <CardTitle className='text-base'>Customer Credit List</CardTitle>
+                    <CardDescription>Overview of the latest credit transactions</CardDescription>
+                    <ArrowLeftRight color='white' className='absolute p-3 bg-blue-500 rounded-lg top-3 right-5 size-12' />
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Cashier Name</TableHead>
+                                <TableHead>Name</TableHead>
                                 <TableHead>Total Cost</TableHead>
                                 <TableHead>Total Paid</TableHead>
-                                <TableHead>Date</TableHead>
+                                <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {transactions?.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center">
+                                    <TableCell colSpan={5} className="text-center">
                                         No transactions available.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 transactions?.map((transaction) => (
-                                    <TableRow key={transaction.id}>
-                                        <TableCell>{transaction.Cashier.last_name}, {transaction.Cashier.first_name}</TableCell>
-                                        <TableCell>{formatCurrency(transaction.total_cost)}</TableCell>
-                                        <TableCell>{formatCurrency(transaction.total_paid)}</TableCell>
-                                        <TableCell>{formatDate(transaction.createdAt)}</TableCell>
+                                    <TableRow key={transaction.customer_id}>
+                                        <TableCell>{transaction.customer?.last_name}, {transaction.customer?.first_name}</TableCell>
+                                        <TableCell>{formatCurrency(transaction._sum.total_cost ?? 0)}</TableCell>
+                                        <TableCell>{formatCurrency(transaction._sum.total_paid ?? 0)}</TableCell>
+                                        <TableCell><Button variant='outline' className='tracking-widest' onClick={() => router.push(`/admin/view-customer?id=${transaction.customer_id}`)}>...</Button></TableCell>
                                     </TableRow>
                                 ))
                             )}

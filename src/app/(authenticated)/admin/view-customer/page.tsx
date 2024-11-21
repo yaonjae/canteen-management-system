@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { api } from "@/trpc/react"
 import { useRouter, useSearchParams } from 'next/navigation'
-import React from 'react'
+import React, { useState } from 'react'
 import { DatePickerWithRange } from "@/components/ui/datePickerWithRange"
 import { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
@@ -39,6 +39,9 @@ import {
     zodResolver
 } from "@hookform/resolvers/zod"
 import { z } from 'zod'
+import PaginationComponent from '@/app/_components/pagination'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import PaymentDialog from '@/app/_components/pay-dialog'
 
 const formSchema = z.object({
     transaction_type: z.string(),
@@ -54,7 +57,32 @@ const ViewCustomer = () => {
     const [dateRangeHistory, setDateRangeHistory] = React.useState<DateRange | undefined>()
     const searchParams = useSearchParams();
     const customerId = searchParams.get('id');
-    const { data: orders, isLoading } = customerId ? api.customer.getCustomerCredit.useQuery({ id: customerId }) : { data: null, isLoading: false };
+    const [currentOrdersPage, setCurrentOrdersPage] = React.useState(1);
+    const [currentHistoryPage, setCurrentHistoryPage] = React.useState(1);
+    const itemsPerPage = 10;
+    const [isDialogOpen, setDialogOpen] = useState(false)
+    const [paymentAmount, setPaymentAmount] = useState<number | string>('')
+    const [currentCredit, setCurrentCredit] = useState<number>(0)
+    const [remainingCredit, setRemainingCredit] = useState<number>(0)
+    const { data: customer } = api.customer.getCustomerById.useQuery(
+        { id: String(customerId) },
+        { enabled: Boolean(customerId) }
+    );
+    const { data: orders, isLoading } = customerId
+        ? api.customer.getCustomerCredit.useQuery({
+            id: customerId,
+            page: currentOrdersPage,
+            itemsPerPage,
+        })
+        : { data: null, isLoading: false };
+
+    const { data: history, isLoading: isHistoryLoading } = customerId
+        ? api.customer.getCustomerHistory.useQuery({
+            id: customerId,
+            page: currentHistoryPage,
+            itemsPerPage,
+        })
+        : { data: null, isLoading: false };
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -63,139 +91,192 @@ const ViewCustomer = () => {
         },
     });
 
+    const handlePayClick = () => {
+        setCurrentCredit(orders?.total_cost || 0)
+        setDialogOpen(true)
+    }
+
+    const handlePaymentChange = (value: string) => {
+        const amount = parseFloat(value)
+        setPaymentAmount(value)
+        setRemainingCredit(currentCredit - (isNaN(amount) ? 0 : amount))
+    }
+
+    const handleConfirmPayment = () => {
+        console.log(`Payment confirmed: ${paymentAmount}`)
+        setDialogOpen(false)
+    }
+
     return (
-        <Tabs defaultValue="list" className="max-w-6xl mx-auto py-5">
-            <div className='w-80'>
-                <TabsList className="flex">
-                    <TabsTrigger value="list" className='flex-1'>Credits List</TabsTrigger>
-                    <TabsTrigger value="history" className='flex-1'>Transaction History</TabsTrigger>
-                </TabsList>
-            </div>
-            <TabsContent value="list">
-                <Card>
-                    <CardContent className='space-y-4 pt-7'>
-                        <div className='flex items-center justify-start'>
-                            <Label className='w-28'>Date Range:</Label>
-                            <DatePickerWithRange
-                                className="w-[250px]"
-                                dateRange={dateRangeList}
-                                onDateChange={(e) => setDateRangeList({
-                                    from: e?.from,
-                                    to: e?.to ? endOfDay(e.to) : undefined,
-                                })}
-                            />
+        <>
+            <Tabs defaultValue="list" className="max-w-6xl mx-auto py-5">
+                <div className='flex justify-between items-center'>
+                    <TabsList className="flex w-80">
+                        <TabsTrigger value="list" className='flex-1'>Credits List</TabsTrigger>
+                        <TabsTrigger value="history" className='flex-1'>Transaction History</TabsTrigger>
+                    </TabsList>
+                    <div>
+                        <div className='grid grid-cols-2'>
+                            <p>ID:</p>
+                            <p className='font-bold'>{customer?.id}</p>
                         </div>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Order ID</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Total Cost</TableHead>
-                                    <TableHead>Total Paid</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {orders?.order.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="text-center">
-                                            No order available
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    orders?.order.map((order) => (
-                                        <TableRow key={order.id}>
-                                            <TableCell>{order.id}</TableCell>
-                                            <TableCell>{formatDate(order.createdAt)}</TableCell>
-                                            <TableCell>{formatCurrency(order.total_cost)}</TableCell>
-                                            <TableCell>{formatCurrency(order.total_paid)}</TableCell>
-                                        </TableRow>
-                                    )))}
-                            </TableBody>
-                        </Table>
-                        <div className='flex items-center justify-end gap-4'>
-                            <p className='font-bold'>Current Credit: {formatCurrency(orders?.total_cost || 0)}</p>
-                            <Button>Pay</Button>
+                        <div className='grid grid-cols-2'>
+                            <p>Name: </p>
+                            <p className='font-bold'>{customer?.last_name}, {customer?.first_name}</p>
                         </div>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-            <TabsContent value="history" className='flex space-x-4 items-start'>
-                <Card className='flex-1'>
-                    <CardContent className='space-y-4 pt-7'>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Payment</TableHead>
-                                    <TableHead>Total Cost</TableHead>
-                                    <TableHead>Date</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {orders?.history.length === 0 ? (
+                    </div>
+                </div>
+                <TabsContent value="list">
+                    <Card>
+                        <CardContent className='space-y-4 pt-7'>
+                            <div className='flex justify-between items-center'>
+                                <div className='flex items-center justify-start'>
+                                    <Label className='w-28'>Date Range:</Label>
+                                    <DatePickerWithRange
+                                        className="w-[250px]"
+                                        dateRange={dateRangeList}
+                                        onDateChange={(e) => setDateRangeList({
+                                            from: e?.from,
+                                            to: e?.to ? endOfDay(e.to) : undefined,
+                                        })}
+                                    />
+                                </div>
+                                <div className='flex items-center justify-end gap-4'>
+                                    <p className='font-bold'>Current Credit: {formatCurrency(orders?.total_cost || 0)}</p>
+                                    <Button onClick={handlePayClick}>Pay</Button>
+                                </div>
+                            </div>
+                            <Table>
+                                <TableHeader>
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center">
-                                            No order available
-                                        </TableCell>
+                                        <TableHead>Order ID</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Total Cost</TableHead>
+                                        <TableHead>Total Paid</TableHead>
                                     </TableRow>
-                                ) : (
-                                    orders?.history.map((order) => (
-                                        <TableRow key={order.id}>
-                                            <TableCell>{order.transaction_type}</TableCell>
-                                            <TableCell>{formatCurrency(order.total_cost)}</TableCell>
-                                            <TableCell>{formatDate(order.createdAt)}</TableCell>
+                                </TableHeader>
+                                <TableBody>
+                                    {orders?.orders.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="text-center">
+                                                No order available
+                                            </TableCell>
                                         </TableRow>
-                                    )))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-                <Card className="flex-none">
-                    <CardContent className="pt-5">
-                        <Form {...form}>
-                            <form className="space-y-5">
-                                <FormField
-                                    control={form.control}
-                                    name="transaction_type"
-                                    render={({ field }) => (
-                                        <FormItem className='w-[300px]'>
-                                            <FormLabel>Payment Mode:</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    ) : (
+                                        orders?.orders.map((order) => (
+                                            <TableRow key={order.id}>
+                                                <TableCell>{order.id}</TableCell>
+                                                <TableCell>{formatDate(order.createdAt)}</TableCell>
+                                                <TableCell>{formatCurrency(order.total_cost)}</TableCell>
+                                                <TableCell>{formatCurrency(order.total_paid)}</TableCell>
+                                            </TableRow>
+                                        )))}
+                                </TableBody>
+                            </Table>
+                            {Math.ceil((orders?.totalOrders || 0) / itemsPerPage) > 1 && (
+                                <PaginationComponent
+                                    currentPage={currentOrdersPage}
+                                    totalPages={Math.ceil((orders?.totalOrders || 0) / itemsPerPage)}
+                                    onPageChange={setCurrentOrdersPage}
+                                />
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="history" className='flex space-x-4 items-start'>
+                    <Card className='flex-1'>
+                        <CardContent className='space-y-4 pt-7'>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Payment</TableHead>
+                                        <TableHead>Total Cost</TableHead>
+                                        <TableHead>Date</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {history?.history.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="text-center">
+                                                No order available
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        history?.history.map((order) => (
+                                            <TableRow key={order.id}>
+                                                <TableCell>{order.transaction_type}</TableCell>
+                                                <TableCell>{formatCurrency(order.total_cost)}</TableCell>
+                                                <TableCell>{formatDate(order.createdAt)}</TableCell>
+                                            </TableRow>
+                                        )))}
+                                </TableBody>
+                            </Table>
+                            {Math.ceil((history?.totalHistory || 0) / itemsPerPage) > 1 && (
+                                <PaginationComponent
+                                    currentPage={currentHistoryPage}
+                                    totalPages={Math.ceil((history?.totalHistory || 0) / itemsPerPage)}
+                                    onPageChange={setCurrentHistoryPage}
+                                />
+                            )}
+                        </CardContent>
+                    </Card>
+                    <Card className="flex-none">
+                        <CardContent className="pt-5">
+                            <Form {...form}>
+                                <form className="space-y-5">
+                                    <FormField
+                                        control={form.control}
+                                        name="transaction_type"
+                                        render={({ field }) => (
+                                            <FormItem className='w-[300px]'>
+                                                <FormLabel>Payment Mode:</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="CASH">Cash</SelectItem>
+                                                        <SelectItem value="CREDIT">Credit</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="date_range"
+                                        render={({ field }) => (
+                                            <FormItem className='w-[300px]'>
+                                                <FormLabel>Date Range:</FormLabel>
                                                 <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="" />
-                                                    </SelectTrigger>
+                                                    <DatePickerWithRange
+                                                        dateRange={dateRangeHistory}
+                                                        onDateChange={setDateRangeHistory}
+                                                    />
                                                 </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="CASH">Cash</SelectItem>
-                                                    <SelectItem value="CREDIT">Credit</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="date_range"
-                                    render={({ field }) => (
-                                        <FormItem className='w-[300px]'>
-                                            <FormLabel>Date Range:</FormLabel>
-                                            <FormControl>
-                                                <DatePickerWithRange
-                                                    dateRange={dateRangeHistory}
-                                                    onDateChange={setDateRangeHistory}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </form>
-                        </Form>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-        </Tabs>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </form>
+                            </Form>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
+            <PaymentDialog
+                isOpen={isDialogOpen}
+                onOpenChange={setDialogOpen}
+                currentCredit={currentCredit}
+                paymentAmount={paymentAmount}
+                onPaymentChange={handlePaymentChange}
+                remainingCredit={remainingCredit}
+                onConfirmPayment={handleConfirmPayment}
+            />
+        </>
     )
 }
 

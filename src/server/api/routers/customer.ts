@@ -84,23 +84,42 @@ export const customerRouter = createTRPCRouter({
             });
         }),
     getCustomerCredit: publicProcedure
-        .input(z.object({ id: z.string() }))
+        .input(z.object({
+            id: z.string(),
+            page: z.number().min(1).default(1),
+            itemsPerPage: z.number().min(1).default(10),
+        }))
         .query(async ({ ctx, input }) => {
-            const order = await ctx.db.transaction.findMany({
+            const { id, page, itemsPerPage } = input;
+            const skip = (page - 1) * itemsPerPage;
+
+            const orders = await ctx.db.transaction.findMany({
                 where: {
-                    customer_id: input.id,
+                    customer_id: id,
                     is_fully_paid: false,
                 },
                 include: {
                     Orders: true,
                     PaymentRecordList: true,
                     Customer: true,
-                }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                skip,
+                take: itemsPerPage,
+            });
+
+            const totalOrders = await ctx.db.transaction.count({
+                where: {
+                    customer_id: id,
+                    is_fully_paid: false,
+                },
             });
 
             const total_cost = await ctx.db.transaction.aggregate({
                 where: {
-                    customer_id: input.id,
+                    customer_id: id,
                     is_fully_paid: false,
                     transaction_type: 'CREDIT',
                 },
@@ -108,25 +127,50 @@ export const customerRouter = createTRPCRouter({
                     total_cost: true,
                     total_paid: true
                 },
-            })
+            });
+
+            const total = (total_cost?._sum.total_cost || 0) - (total_cost?._sum.total_paid || 0);
+
+            return {
+                orders,
+                totalOrders,
+                total_cost: total,
+            };
+        }),
+
+    getCustomerHistory: publicProcedure
+        .input(z.object({
+            id: z.string(),
+            page: z.number().min(1).default(1),
+            itemsPerPage: z.number().min(1).default(10),
+        }))
+        .query(async ({ ctx, input }) => {
+            const { id, page, itemsPerPage } = input;
+            const skip = (page - 1) * itemsPerPage;
 
             const history = await ctx.db.transaction.findMany({
                 where: {
-                    customer_id: input.id,
-                    is_fully_paid: true
+                    customer_id: id,
+                    is_fully_paid: true,
                 },
                 orderBy: {
-                    createdAt: 'desc'
-                }
-            })
+                    createdAt: 'desc',
+                },
+                skip,
+                take: itemsPerPage,
+            });
 
-            const total = (total_cost?._sum.total_cost || 0)-(total_cost?._sum.total_paid || 0)
+            const totalHistory = await ctx.db.transaction.count({
+                where: {
+                    customer_id: id,
+                    is_fully_paid: true,
+                },
+            });
 
             return {
-                order,
-                total_cost: total,
-                history
-            }
+                history,
+                totalHistory,
+            };
         }),
     delete: publicProcedure
         .input(z.object({ id: z.string() }))

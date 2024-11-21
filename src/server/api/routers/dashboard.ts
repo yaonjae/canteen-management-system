@@ -4,21 +4,25 @@ import { startOfMonth, endOfMonth } from "date-fns";
 export const dashboardRouter = createTRPCRouter({
     getDashboardData: publicProcedure.query(async ({ ctx }) => {
         const [transactions, customerCount, productCount, overallSalesResult, monthlySalesResult] = await Promise.all([
-            ctx.db.transaction.findMany({
+            ctx.db.transaction.groupBy({
+                by: ['customer_id'],
                 where: {
                     is_fully_paid: false,
-                    transaction_type: 'CREDIT'
+                    transaction_type: 'CREDIT',
+                    customer_id: {
+                        not: null,
+                    },
+                },
+                _sum: {
+                    total_cost: true,
+                    total_paid: true,
                 },
                 orderBy: {
-                    createdAt: 'desc',
+                    _sum: { 
+                        total_cost: 'desc' 
+                    },
                 },
-                take: 8,
-                include: {
-                    Cashier: true,
-                    Customer: true,
-                    Orders: true,
-                    PaymentRecordList: true,
-                },
+                take: 5,
             }),
             ctx.db.customer.count(),
             ctx.db.product.count({
@@ -51,8 +55,23 @@ export const dashboardRouter = createTRPCRouter({
         const overallSales = overallSalesResult?._sum?.total_cost || 0;
         const monthlySales = monthlySalesResult?._sum?.total_cost || 0;
 
+        const customerTransaction = await Promise.all(
+            transactions.map(async (transaction) => {
+                if (!transaction.customer_id) {
+                    return { ...transaction, customer: null };
+                }
+                const customer = await ctx.db.customer.findUnique({
+                    where: { id: transaction.customer_id },
+                });
+                return {
+                    ...transaction,
+                    customer,
+                };
+            })
+        );
+
         return {
-            transactions,
+            transactions: customerTransaction,
             customerCount,
             productCount,
             overallSales,
