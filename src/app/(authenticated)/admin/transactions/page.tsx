@@ -61,6 +61,15 @@ const Transactions = () => {
         take: itemsPerPage,
     });
 
+    const handleClear = () => {
+        setDateRange(undefined);
+        form.reset({
+            transaction_type: "",
+            is_fully_paid: "",
+            date_range: { from: null, to: null },
+        });
+    }
+
     React.useEffect(() => {
         form.setValue("date_range", dateRange ? { from: dateRange.from ?? null, to: dateRange.to ?? null } : { from: null, to: null });
     }, [dateRange, form]);
@@ -127,7 +136,7 @@ const Transactions = () => {
                                 render={({ field }) => (
                                     <FormItem className='w-[300px]'>
                                         <FormLabel>Payment Mode:</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="" />
@@ -148,7 +157,7 @@ const Transactions = () => {
                                 render={({ field }) => (
                                     <FormItem className='w-[300px]'>
                                         <FormLabel>Status:</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="" />
@@ -181,7 +190,8 @@ const Transactions = () => {
                             />
                         </form>
                     </Form>
-                    <div className='flex justify-end pt-5'>
+                    <div className='flex justify-end gap-2 pt-5'>
+                        <Button variant='outline' onClick={handleClear}>Clear</Button>
                         <Button>Export</Button>
                     </div>
                 </CardContent>

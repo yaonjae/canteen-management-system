@@ -25,14 +25,16 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { LogIn } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   role: z.string(),
-  username: z.string().min(5, {message: "Username must be at least 5 characters"}),
-  password: z.string().min(5, {message: "Password must be at least 5 characters"}),
+  username: z.string().min(5, { message: "Username must be at least 5 characters" }),
+  password: z.string().min(5, { message: "Password must be at least 5 characters" }),
 });
 
 export default function LoginForm() {
+  const { toast } = useToast()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -49,13 +51,19 @@ export default function LoginForm() {
       });
       localStorage.setItem("user", JSON.stringify(data.data.user || null));
       if (data.status === 200) {
-        window.location.href = '/';
-      } else {
-        console.log('error');
+        toast({
+          title: "Login successful",
+        });
+        setTimeout(function () {
+          window.location.href = '/';
+        }, 3000)
       }
     } catch (error) {
-      console.error("Form submission error", error);
-      toast.error("Failed to submit the form. Please try again.");
+      toast({
+        variant: "destructive",
+        title: "Login failed",
+        description: "Incorrect login credentials",
+      })
     }
   }
 

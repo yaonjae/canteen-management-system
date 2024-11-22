@@ -65,8 +65,8 @@ export const transactionRouter = createTRPCRouter({
                 from: z.date().nullable(),
                 to: z.date().nullable(),
             }).optional(),
-            page: z.number().min(1),  // Page number
-            itemsPerPage: z.number().min(1),  // Number of items per page
+            page: z.number().min(1),
+            itemsPerPage: z.number().min(1), 
         })
     ).query(async ({ ctx, input }) => {
         const { page, itemsPerPage, date_range } = input;
@@ -83,7 +83,7 @@ export const transactionRouter = createTRPCRouter({
         const transaction = await ctx.db.transaction.findMany({
             where: filters,
             skip,
-            take: itemsPerPage, // Pagination
+            take: itemsPerPage,
             orderBy: { id: 'asc' },
         });
 
@@ -109,7 +109,7 @@ export const transactionRouter = createTRPCRouter({
             totalcost: totalcostResult?._sum.total_cost || 0,
             totalcash: totalcashResult?._count.id || 0,
             totalcredit: totalcreditResult?._count.id || 0,
-            totalCount,  // Return total count for pagination
+            totalCount,
         };
     })
 });

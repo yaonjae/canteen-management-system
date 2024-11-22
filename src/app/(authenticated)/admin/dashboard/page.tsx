@@ -1,26 +1,38 @@
 'use client'
+import React, { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import formatDate, { formatCurrency } from '@/lib/utils'
 import { api } from '@/trpc/react'
 import { ArrowLeftRight, ChartColumnIncreasing, Package, PhilippinePeso, ShoppingCart, Users } from 'lucide-react'
-import React from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
+import PaginationComponent from '@/app/_components/pagination'
+
+const ITEMS_PER_PAGE = 5;
 
 const Dashboard = () => {
     const router = useRouter()
     const { data: dashboardData } = api.dashboard.getDashboardData.useQuery();
+    const [currentPage, setCurrentPage] = useState(1);
+
     if (!dashboardData) {
         return null;
     }
+
     const { transactions, customerCount, productCount, overallSales, monthlySales } = dashboardData;
 
     const getCurrentMonth = () => {
         const date = new Date();
         return date.toLocaleString('default', { month: 'long' });
-    }
+    };
+
+    const totalPages = Math.ceil((transactions?.length || 0) / ITEMS_PER_PAGE);
+    const paginatedTransactions = transactions?.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
 
     return (
         <div className='py-5 mx-auto max-w-6xl space-y-3'>
@@ -75,28 +87,43 @@ const Dashboard = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {transactions?.length === 0 ? (
+                            {paginatedTransactions?.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center">
+                                    <TableCell colSpan={4} className="text-center">
                                         No transactions available.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                transactions?.map((transaction) => (
+                                paginatedTransactions?.map((transaction) => (
                                     <TableRow key={transaction.customer_id}>
                                         <TableCell>{transaction.customer?.last_name}, {transaction.customer?.first_name}</TableCell>
                                         <TableCell>{formatCurrency(transaction._sum.total_cost ?? 0)}</TableCell>
                                         <TableCell>{formatCurrency(transaction._sum.total_paid ?? 0)}</TableCell>
-                                        <TableCell><Button variant='outline' className='tracking-widest' onClick={() => router.push(`/admin/view-customer?id=${transaction.customer_id}`)}>...</Button></TableCell>
+                                        <TableCell>
+                                            <Button
+                                                variant='outline'
+                                                className='tracking-widest'
+                                                onClick={() => router.push(`/admin/view-customer?id=${transaction.customer_id}`)}
+                                            >
+                                                ...
+                                            </Button>
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             )}
                         </TableBody>
                     </Table>
+                    {totalPages > 1 && (
+                        <PaginationComponent
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
+                    )}
                 </CardContent>
             </Card>
         </div>
-    )
-}
+    );
+};
 
-export default Dashboard
+export default Dashboard;
