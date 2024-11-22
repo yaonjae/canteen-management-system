@@ -179,4 +179,98 @@ export const customerRouter = createTRPCRouter({
                 where: { id: input.id },
             });
         }),
+
+    payCredits: publicProcedure
+        .input(
+            z.object({
+                id: z.string(),
+                payment: z.number(),
+            }),
+        )
+        .mutation(async ({ ctx, input }) => {
+            const { id, payment } = input;
+
+            const transactions = await ctx.db.transaction.findMany({
+                where: {
+                    customer_id: id,
+                    is_fully_paid: false,
+                },
+                orderBy: {
+                    createdAt: "asc",
+                },
+            });
+
+            let remainingPayment = payment;
+
+            for (const transaction of transactions) {
+                const outstandingBalance = transaction.total_cost - transaction.total_paid;
+
+                if (remainingPayment <= 0) break;
+
+                if (remainingPayment >= outstandingBalance) {
+                    const transactionProcess = await ctx.db.transaction.update({
+                        where: { id: transaction.id },
+                        data: {
+                            total_paid: transaction.total_cost,
+                            is_fully_paid: true,
+                        },
+                    });
+
+                    const paymentRecord = await ctx.db.paymentRecord.create({
+                        data: {
+                            customer_id: id,
+                            amount: transaction.total_cost,
+                        }
+                    })
+
+                    if (transactionProcess && paymentRecord) {
+                        await ctx.db.paymentRecordList.create({
+                            data: {
+                                amount: transaction.total_cost,
+                                transaction_id: transaction.id,
+                                payment_record_id: paymentRecord.id,
+                            }
+                        })
+                    }
+
+                    remainingPayment -= outstandingBalance;
+                } else {
+                    const transactionProcess = await ctx.db.transaction.update({
+                        where: { id: transaction.id },
+                        data: {
+                            total_paid: transaction.total_paid + remainingPayment,
+                        },
+                    });
+
+                    const paymentRecord = await ctx.db.paymentRecord.create({
+                        data: {
+                            customer_id: id,
+                            amount: payment,
+                        }
+                    })
+
+                    if (transactionProcess && paymentRecord) {
+                        await ctx.db.paymentRecordList.create({
+                            data: {
+                                amount: payment,
+                                transaction_id: transaction.id,
+                                payment_record_id: paymentRecord.id,
+                            }
+                        })
+                    }
+
+                    remainingPayment = 0;
+                    break;
+                }
+            }
+
+            return {
+                remainingPayment,
+                updatedTransactions: transactions.map((t) => ({
+                    id: t.id,
+                    total_paid: t.total_paid,
+                    is_fully_paid: t.is_fully_paid,
+                })),
+            };
+        }),
 });

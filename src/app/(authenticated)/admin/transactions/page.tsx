@@ -30,6 +30,7 @@ import {
     zodResolver
 } from "@hookform/resolvers/zod"
 import PaginationComponent from '@/app/_components/pagination'
+import { Button } from '@/components/ui/button'
 
 const formSchema = z.object({
     transaction_type: z.string(),
@@ -180,6 +181,9 @@ const Transactions = () => {
                             />
                         </form>
                     </Form>
+                    <div className='flex justify-end pt-5'>
+                        <Button>Export</Button>
+                    </div>
                 </CardContent>
             </Card>
         </div>

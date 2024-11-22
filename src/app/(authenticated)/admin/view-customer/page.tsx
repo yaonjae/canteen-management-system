@@ -9,7 +9,7 @@ import { DatePickerWithRange } from "@/components/ui/datePickerWithRange"
 import { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
 import { endOfDay } from 'date-fns'
-import formatDate, { formatCurrency } from '@/lib/utils'
+import formatDate, { formatCurrency, getFormattedDate } from '@/lib/utils'
 import { Input } from "@/components/ui/input"
 import {
     Tabs,
@@ -42,6 +42,7 @@ import { z } from 'zod'
 import PaginationComponent from '@/app/_components/pagination'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import PaymentDialog from '@/app/_components/pay-dialog'
+import { useToast } from '@/hooks/use-toast'
 
 const formSchema = z.object({
     transaction_type: z.string(),
@@ -53,6 +54,7 @@ const formSchema = z.object({
 
 const ViewCustomer = () => {
     const router = useRouter()
+    const { toast } = useToast();
     const [dateRangeList, setDateRangeList] = React.useState<DateRange | undefined>()
     const [dateRangeHistory, setDateRangeHistory] = React.useState<DateRange | undefined>()
     const searchParams = useSearchParams();
@@ -68,7 +70,7 @@ const ViewCustomer = () => {
         { id: String(customerId) },
         { enabled: Boolean(customerId) }
     );
-    const { data: orders, isLoading } = customerId
+    const { data: orders, isLoading, refetch: refetchOrder } = customerId
         ? api.customer.getCustomerCredit.useQuery({
             id: customerId,
             page: currentOrdersPage,
@@ -76,7 +78,7 @@ const ViewCustomer = () => {
         })
         : { data: null, isLoading: false };
 
-    const { data: history, isLoading: isHistoryLoading } = customerId
+    const { data: history, isLoading: isHistoryLoading, refetch: refetchHistory } = customerId
         ? api.customer.getCustomerHistory.useQuery({
             id: customerId,
             page: currentHistoryPage,
@@ -102,9 +104,41 @@ const ViewCustomer = () => {
         setRemainingCredit(currentCredit - (isNaN(amount) ? 0 : amount))
     }
 
-    const handleConfirmPayment = () => {
-        console.log(`Payment confirmed: ${paymentAmount}`)
-        setDialogOpen(false)
+    const creditsPayment = api.customer.payCredits.useMutation({
+        onSuccess: (data) => {
+            toast({
+                title: "Payment successful!",
+                description: getFormattedDate(),
+            });
+            if (refetchOrder) {
+                refetchOrder();
+            }
+            if (refetchHistory) {
+                refetchHistory();
+            }
+            setDialogOpen(false);
+        },
+        onError: () => {
+            toast({
+                variant: "destructive",
+                title: "Failed to process payment. Please try again.",
+                description: getFormattedDate(),
+            })
+        },
+    })
+
+    const handleConfirmPayment = async () => {
+        if (customerId) {
+            const payload = {
+                id: customerId,
+                payment: Number(paymentAmount)
+            }
+
+            await creditsPayment.mutateAsync({
+                ...payload,
+            })
+        }
+
     }
 
     return (
@@ -115,15 +149,9 @@ const ViewCustomer = () => {
                         <TabsTrigger value="list" className='flex-1'>Credits List</TabsTrigger>
                         <TabsTrigger value="history" className='flex-1'>Transaction History</TabsTrigger>
                     </TabsList>
-                    <div>
-                        <div className='grid grid-cols-2'>
-                            <p>ID:</p>
-                            <p className='font-bold'>{customer?.id}</p>
-                        </div>
-                        <div className='grid grid-cols-2'>
-                            <p>Name: </p>
-                            <p className='font-bold'>{customer?.last_name}, {customer?.first_name}</p>
-                        </div>
+                    <div className='grid grid-cols-2 px-2 gap-2'>
+                        <p className='text-right'>Name: </p>
+                        <p className='font-bold'>{customer?.last_name}, {customer?.first_name}</p>
                     </div>
                 </div>
                 <TabsContent value="list">
@@ -189,6 +217,7 @@ const ViewCustomer = () => {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead>Order ID</TableHead>
                                         <TableHead>Payment</TableHead>
                                         <TableHead>Total Cost</TableHead>
                                         <TableHead>Date</TableHead>
@@ -204,6 +233,7 @@ const ViewCustomer = () => {
                                     ) : (
                                         history?.history.map((order) => (
                                             <TableRow key={order.id}>
+                                                <TableCell>{order.id}</TableCell>
                                                 <TableCell>{order.transaction_type}</TableCell>
                                                 <TableCell>{formatCurrency(order.total_cost)}</TableCell>
                                                 <TableCell>{formatDate(order.createdAt)}</TableCell>
