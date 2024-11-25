@@ -17,7 +17,7 @@ import PaginationComponent from '@/app/_components/pagination'
 const Products = () => {
     const router = useRouter()
     const [currentPage, setCurrentPage] = useState(1)
-    const [pageSize, setPageSize] = useState(10)
+    const [pageSize, setPageSize] = useState(20)
     const { data, isLoading, refetch } = api.product.getProducts.useQuery({ page: currentPage, pageSize })
     const { toast } = useToast()
     const [searchQuery, setSearchQuery] = useState('')

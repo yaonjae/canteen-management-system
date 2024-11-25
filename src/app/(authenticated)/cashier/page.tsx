@@ -190,6 +190,14 @@ const Cashier = () => {
       return;
     }
 
+    if (paymentMode === 'CASH' && (typeof cashReceived === 'string' ? Number(cashReceived) : cashReceived) < totalAmount) {
+      toast({
+        variant: "destructive",
+        title: "Failed to order product. Cash received is insufficient. Please try again.",
+      });
+      return;
+    }
+
     const orderDetails = Array.from(orderSummary.entries()).map(
       ([productName, { count, price }]) => {
         const product = products?.find((prod) => prod.name === productName);
