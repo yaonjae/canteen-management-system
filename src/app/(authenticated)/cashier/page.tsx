@@ -44,6 +44,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import Receipt from "@/app/_components/receipt";
 
 const Cashier = () => {
   const { user } = useStore()
@@ -222,6 +223,46 @@ const Cashier = () => {
     await createOrder.mutateAsync({
       ...payload,
     })
+
+    printReceipt(payload);
+  };
+
+  const printReceipt = (payload: {
+    cashierId: number;
+    transactionType: "CASH" | "CREDIT";
+    totalCost: number;
+    totalPaid: number;
+    orders: { productId: number; quantity: number }[];
+    customerId?: string;
+  }) => {
+    const cashierName = "Cashier Name";
+    const customerName = payload.customerId ? "Customer Name" : undefined;
+  
+    const orderSummary = new Map(
+      payload.orders.map((order) => {
+        const product = products?.find((prod) => prod.id === order.productId);
+        return [
+          product?.name ?? "Unknown Product",
+          { productName: product?.name ?? "Unknown Product", count: order.quantity, price: product?.amount ?? 0 },
+        ];
+      })
+    );
+  
+    const totalAmount = payload.totalCost;
+    const cashReceived = payload.totalPaid;
+    const change = cashReceived - totalAmount;
+
+    return (
+      <Receipt
+        cashierName={cashierName}
+        transactionType={payload.transactionType}
+        orderSummary={orderSummary}
+        totalAmount={totalAmount}
+        cashReceived={cashReceived}
+        change={change}
+        customerName={customerName}
+      />
+    );
   };
 
   useEffect(() => {
