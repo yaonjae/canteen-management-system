@@ -28,9 +28,9 @@ import { formatCurrency, getFormattedDate } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useStore } from "@/lib/store/app";
-import { useToast } from "@/hooks/use-toast"
-import { Check, ChevronsUpDown } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   Command,
   CommandEmpty,
@@ -38,18 +38,18 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 import Receipt from "@/app/_components/receipt";
 
 const Cashier = () => {
-  const { user } = useStore()
+  const { user } = useStore();
   const { toast } = useToast();
-  const {data: categories } = api.product.getCategories.useQuery();
+  const { data: categories } = api.product.getCategories.useQuery();
   const { data: customers } = api.cashier.getCustomer.useQuery();
   const {
     data: products,
@@ -66,8 +66,8 @@ const Cashier = () => {
     Map<string, { count: number; price: number }>
   >(new Map());
   const router = useRouter();
-  const [open, setOpen] = React.useState(false)
-  const [value, setValue] = React.useState("")
+  const [open, setOpen] = React.useState(false);
+  const [value, setValue] = React.useState("");
 
   const totalAmount = Array.from(orderSummary.values()).reduce(
     (total, { count, price }) => total + count * (isNaN(price) ? 0 : price),
@@ -90,7 +90,7 @@ const Cashier = () => {
     setOrderSummary((prev) => {
       const newSummary = new Map(prev);
       const currentItem = newSummary.get(productName) || { count: 0, price: 0 };
-      
+
       if (currentItem.count === 1) {
         newSummary.delete(productName);
       } else {
@@ -101,7 +101,7 @@ const Cashier = () => {
       }
 
       if (newSummary.size === 0) {
-        setPaymentMode('CASH');
+        setPaymentMode("CASH");
       }
 
       return newSummary;
@@ -115,7 +115,7 @@ const Cashier = () => {
         description: getFormattedDate(),
       });
       orderSummary.clear();
-      setPaymentMode('CASH');
+      setPaymentMode("CASH");
       setLoader(false);
     },
     onError: () => {
@@ -123,7 +123,7 @@ const Cashier = () => {
         variant: "destructive",
         title: "Failed to create order. Please try again.",
         description: getFormattedDate(),
-      })
+      });
       setLoader(false);
     },
   });
@@ -148,7 +148,7 @@ const Cashier = () => {
 
   const clearOrderSummary = () => {
     setOrderSummary(new Map());
-    setPaymentMode('CASH');
+    setPaymentMode("CASH");
   };
 
   const filteredProducts = products?.filter(
@@ -183,18 +183,24 @@ const Cashier = () => {
   };
 
   const onSubmit = async () => {
-    if (paymentMode === 'CREDIT' && !value) {
+    if (paymentMode === "CREDIT" && !value) {
       toast({
         variant: "destructive",
-        title: "Failed to order product. The Customer field is required if the payment mode is Credit. Please try again.",
+        title:
+          "Failed to order product. The Customer field is required if the payment mode is Credit. Please try again.",
       });
       return;
     }
 
-    if (paymentMode === 'CASH' && (typeof cashReceived === 'string' ? Number(cashReceived) : cashReceived) < totalAmount) {
+    if (
+      paymentMode === "CASH" &&
+      (typeof cashReceived === "string" ? Number(cashReceived) : cashReceived) <
+        totalAmount
+    ) {
       toast({
         variant: "destructive",
-        title: "Failed to order product. Cash received is insufficient. Please try again.",
+        title:
+          "Failed to order product. Cash received is insufficient. Please try again.",
       });
       return;
     }
@@ -205,8 +211,10 @@ const Cashier = () => {
         return {
           productId: product?.id ?? 0,
           quantity: count,
+          price: price,
+          total: count * price,
         };
-      }
+      },
     );
 
     setLoader(true);
@@ -220,49 +228,81 @@ const Cashier = () => {
       ...(paymentMode === "CREDIT" && { customerId: value }),
     };
 
-    await createOrder.mutateAsync({
-      ...payload,
-    })
+    try {
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: ["e7810a71-73ae-499d-8c15-faa9aef0c3f2"],
+      });
 
-    printReceipt(payload);
-  };
+      console.log("Device selected:", device.name);
 
-  const printReceipt = (payload: {
-    cashierId: number;
-    transactionType: "CASH" | "CREDIT";
-    totalCost: number;
-    totalPaid: number;
-    orders: { productId: number; quantity: number }[];
-    customerId?: string;
-  }) => {
-    const cashierName = "Cashier Name";
-    const customerName = payload.customerId ? "Customer Name" : undefined;
+      if (!device.gatt) {
+        throw new Error("Selected device does not support GATT.");
+      }
+
+      const server = await device.gatt.connect();
+      const services = await server.getPrimaryServices();
+
+      const service = services.find(
+        (s) => s.uuid === "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
+      );
+
+      if (!service) {
+        throw new Error("Service not found on device.");
+      }
+      const characteristic = await service.getCharacteristic(
+        "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f",
+      );
+
+      const textData = [
+        "Hello World\n",
+        "-------------------------------\n",
+        "This is a longer line of text\n",
+        "This is another line\n",
+        "This is another line\n",
+        "This is another line\n",
+        "This is another line\n",
+        "This is another line\n",
+        "This is another line\n",
+        "This is another line\n",
+        "This is another line\n",
+        "This is another line\n",
+        "\n",
+        "\n",
+        "\n",
+      ];
+
+      for (const text of textData) {
+        const encoder = new TextEncoder();
+        const encodedText = encoder.encode(text);
   
-    const orderSummary = new Map(
-      payload.orders.map((order) => {
-        const product = products?.find((prod) => prod.id === order.productId);
-        return [
-          product?.name ?? "Unknown Product",
-          { productName: product?.name ?? "Unknown Product", count: order.quantity, price: product?.amount ?? 0 },
-        ];
-      })
-    );
+        const charactersPerLine = 57;
+        const totalLines = Math.ceil(encodedText.length / charactersPerLine);
   
-    const totalAmount = payload.totalCost;
-    const cashReceived = payload.totalPaid;
-    const change = cashReceived - totalAmount;
+        const feedCommand = 0x0c;
+        const feedMultiplier = 3;
+  
+        const feedCommands = new Uint8Array(totalLines * feedMultiplier).fill(
+          feedCommand,
+        );
+  
+        const finalData = new Uint8Array(
+          encodedText.length + feedCommands.length,
+        );
+        finalData.set(encodedText);
+        finalData.set(feedCommands, encodedText.length);
+        await characteristic.writeValue(finalData);
+      }
 
-    return (
-      <Receipt
-        cashierName={cashierName}
-        transactionType={payload.transactionType}
-        orderSummary={orderSummary}
-        totalAmount={totalAmount}
-        cashReceived={cashReceived}
-        change={change}
-        customerName={customerName}
-      />
-    );
+
+      console.log("Data sent to printer and automatic feed triggered");
+    } catch (error) {
+      console.error("Bluetooth error:", error);
+    }
+
+    // await createOrder.mutateAsync({
+    //   ...payload,
+    // });
   };
 
   useEffect(() => {
@@ -278,7 +318,7 @@ const Cashier = () => {
   }, [cashReceived, totalAmount]);
 
   return (
-    <div className="pt-5 mx-auto max-w-7xl">
+    <div className="mx-auto max-w-7xl pt-5">
       <div className="flex items-center justify-between">
         <p className="font-bold uppercase">{user?.username}</p>
         <Button onClick={logout}>
@@ -287,7 +327,7 @@ const Cashier = () => {
         </Button>
       </div>
       <div className="flex gap-2 py-5">
-        <div className="flex-1 w-8/12 space-y-4">
+        <div className="w-8/12 flex-1 space-y-4">
           <div className="flex items-center justify-start gap-2">
             <Input
               className="w-72"
@@ -328,15 +368,15 @@ const Cashier = () => {
               filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="relative transition-transform duration-200 ease-in-out rounded-lg shadow size-48 hover:scale-105"
+                  className="relative size-48 rounded-lg shadow transition-transform duration-200 ease-in-out hover:scale-105"
                   onClick={() => handleProductClick(product.id.toString())}
                 >
                   <img
                     src={product.image_url}
                     alt=""
-                    className="object-cover w-full h-full rounded-lg"
+                    className="h-full w-full rounded-lg object-cover"
                   />
-                  <p className="absolute bottom-0 left-0 flex items-center justify-between w-full p-3 text-sm text-white rounded-b-lg bg-gradient-to-b from-transparent to-blue-950 pt-14">
+                  <p className="absolute bottom-0 left-0 flex w-full items-center justify-between rounded-b-lg bg-gradient-to-b from-transparent to-blue-950 p-3 pt-14 text-sm text-white">
                     <span>{product.name}</span>
                     <span>{formatCurrency(product.amount)}</span>
                   </p>
@@ -349,7 +389,7 @@ const Cashier = () => {
             )}
           </div>
         </div>
-        <Card className="self-start flex-none w-4/12">
+        <Card className="w-4/12 flex-none self-start">
           <CardHeader className="bg-slate-100">
             <CardTitle>Order Summary</CardTitle>
             <CardDescription>
@@ -363,12 +403,23 @@ const Cashier = () => {
                   ([productName, { count, price }]) => {
                     const validPrice = isNaN(price) ? 0 : price;
                     return (
-                      <div key={productName} className="grid items-center grid-cols-4 py-2">
-                        <p className="flex items-center col-span-2 text-sm text-left"><Plus onClick={() => handleIncreaseQuantity(productName)} /><Minus onClick={() => handleDecreaseQuantity(productName)} />{productName}</p>
-                        <p className="text-sm text-center">
+                      <div
+                        key={productName}
+                        className="grid grid-cols-4 items-center py-2"
+                      >
+                        <p className="col-span-2 flex items-center text-left text-sm">
+                          <Plus
+                            onClick={() => handleIncreaseQuantity(productName)}
+                          />
+                          <Minus
+                            onClick={() => handleDecreaseQuantity(productName)}
+                          />
+                          {productName}
+                        </p>
+                        <p className="text-center text-sm">
                           {count} x {formatCurrency(validPrice)}
                         </p>
-                        <p className="text-sm text-right">
+                        <p className="text-right text-sm">
                           {formatCurrency(count * validPrice)}
                         </p>
                       </div>
@@ -404,7 +455,7 @@ const Cashier = () => {
                           variant="outline"
                           role="combobox"
                           aria-expanded={open}
-                          className="justify-between w-full"
+                          className="w-full justify-between"
                         >
                           {value
                             ? `${customers?.find((customer) => customer.id === value)?.id} | ${customers?.find((customer) => customer.id === value)?.last_name}, ${customers?.find((customer) => customer.id === value)?.first_name}`
@@ -423,15 +474,22 @@ const Cashier = () => {
                                   key={customer.id}
                                   value={customer.id}
                                   onSelect={(currentValue) => {
-                                    setValue(currentValue === value ? "" : currentValue)
-                                    setOpen(false)
+                                    setValue(
+                                      currentValue === value
+                                        ? ""
+                                        : currentValue,
+                                    );
+                                    setOpen(false);
                                   }}
                                 >
-                                  {customer.id} | {customer.last_name}, {customer.first_name}
+                                  {customer.id} | {customer.last_name},{" "}
+                                  {customer.first_name}
                                   <Check
                                     className={cn(
                                       "ml-auto",
-                                      value === customer.id ? "opacity-100" : "opacity-0"
+                                      value === customer.id
+                                        ? "opacity-100"
+                                        : "opacity-0",
                                     )}
                                   />
                                 </CommandItem>
@@ -442,7 +500,7 @@ const Cashier = () => {
                       </PopoverContent>
                     </Popover>
                   </div>
-                  {paymentMode === 'CASH' && (
+                  {paymentMode === "CASH" && (
                     <>
                       <div className="flex items-center justify-start gap-2">
                         <Label className="w-56">Cash Received:</Label>
@@ -465,8 +523,19 @@ const Cashier = () => {
                   )}
                 </div>
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="destructive" onClick={clearOrderSummary}>Cancel</Button>
-                  <Button onClick={() => onSubmit()}>{loader ? <><LoaderCircle className="animate-spin" /><span>Loading...</span></> : 'Checkout'}</Button>
+                  <Button variant="destructive" onClick={clearOrderSummary}>
+                    Cancel
+                  </Button>
+                  <Button onClick={() => onSubmit()}>
+                    {loader ? (
+                      <>
+                        <LoaderCircle className="animate-spin" />
+                        <span>Loading...</span>
+                      </>
+                    ) : (
+                      "Checkout"
+                    )}
+                  </Button>
                 </div>
               </div>
             ) : (
