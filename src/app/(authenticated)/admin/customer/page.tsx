@@ -82,7 +82,7 @@ const Customer = () => {
     return (
         <Card className="max-w-4xl mx-auto py-5">
             <CardHeader>
-                <CardTitle>Customer</CardTitle>
+                <CardTitle>Staff and Faculty</CardTitle>
             </CardHeader>
             <CardContent className='space-y-4'>
                 <div className='flex justify-between items-center'>

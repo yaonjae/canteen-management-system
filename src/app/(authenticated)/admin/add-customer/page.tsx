@@ -116,7 +116,7 @@ export default function AddCustomer() {
     return (
         <Card className="max-w-3xl mx-auto py-5">
             <CardHeader>
-                <CardTitle>{customerId ? "Edit " : "Add "}Customer</CardTitle>
+                <CardTitle>{customerId ? "Edit " : "Add "}Staff and Faculty</CardTitle>
             </CardHeader>
             <CardContent>
                 <Form {...form}>

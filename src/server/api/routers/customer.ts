@@ -99,7 +99,11 @@ export const customerRouter = createTRPCRouter({
                     is_fully_paid: false,
                 },
                 include: {
-                    Orders: true,
+                    Orders: {
+                        include: {
+                            Product: true,
+                        },
+                    },
                     PaymentRecordList: true,
                     Customer: true,
                 },

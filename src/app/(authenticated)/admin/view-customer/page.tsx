@@ -179,6 +179,9 @@ const ViewCustomer = () => {
                                     <TableRow>
                                         <TableHead>Order ID</TableHead>
                                         <TableHead>Date</TableHead>
+                                        <TableHead>Product</TableHead>
+                                        <TableHead>Quantity</TableHead>
+                                        <TableHead>Amount</TableHead>
                                         <TableHead>Total Cost</TableHead>
                                         <TableHead>Total Paid</TableHead>
                                     </TableRow>
@@ -186,19 +189,25 @@ const ViewCustomer = () => {
                                 <TableBody>
                                     {orders?.orders.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={4} className="text-center">
+                                            <TableCell colSpan={5} className="text-center">
                                                 No order available
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        orders?.orders.map((order) => (
-                                            <TableRow key={order.id}>
-                                                <TableCell>{order.id}</TableCell>
-                                                <TableCell>{formatDate(order.createdAt)}</TableCell>
-                                                <TableCell>{formatCurrency(order.total_cost)}</TableCell>
-                                                <TableCell>{formatCurrency(order.total_paid)}</TableCell>
-                                            </TableRow>
-                                        )))}
+                                        orders?.orders.flatMap((order) =>
+                                            order.Orders.map((orderItem) => (
+                                                <TableRow key={`${order.id}-${orderItem.id}`}>
+                                                    <TableCell>{order.id}</TableCell>
+                                                    <TableCell>{formatDate(order.createdAt)}</TableCell>
+                                                    <TableCell>{orderItem.Product.name}</TableCell>
+                                                    <TableCell>{orderItem.quantity}</TableCell>
+                                                    <TableCell>{formatCurrency(orderItem.Product.amount)}</TableCell>
+                                                    <TableCell>{formatCurrency(orderItem.Product.amount * orderItem.quantity)}</TableCell>
+                                                    <TableCell>{formatCurrency(order.total_paid)}</TableCell>
+                                                </TableRow>
+                                            ))
+                                        )
+                                    )}
                                 </TableBody>
                             </Table>
                             {Math.ceil((orders?.totalOrders || 0) / itemsPerPage) > 1 && (
