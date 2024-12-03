@@ -2,7 +2,7 @@ import React from 'react'
 import Image from 'next/image'
 import LoginForm from './login-form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import loginImage from '@/app/images/trans_bg.png'
+import loginImage from '@/app/images/cpms.jpg'
 
 const Login = () => {
     return (
