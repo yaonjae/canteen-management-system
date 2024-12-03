@@ -24,7 +24,11 @@ import CardLoaderCashier from "@/app/_components/card-loader-cashier";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Separator } from "@/components/ui/separator";
-import { formatCurrency, getFormattedDate } from "@/lib/utils";
+import {
+  formatCurrency,
+  getFormattedDate,
+  getFormattedDateDay,
+} from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useStore } from "@/lib/store/app";
@@ -217,8 +221,6 @@ const Cashier = () => {
       },
     );
 
-    setLoader(true);
-
     const payload = {
       cashierId: user?.id ?? 0,
       transactionType: paymentMode as "CASH" | "CREDIT",
@@ -228,81 +230,63 @@ const Cashier = () => {
       ...(paymentMode === "CREDIT" && { customerId: value }),
     };
 
+    const lineWidth = 34;
+
+    const centerText = (text: string): string => {
+      const padding = Math.floor((lineWidth - text.length) / 2);
+      return " ".repeat(padding > 0 ? padding : 0) + text;
+    };
+
+    const textData = [
+      `${centerText("Canteen Management System")}\n\n`,
+      `Date: ${getFormattedDateDay()}\n`,
+      `Cashier: ${user?.username}\n`,
+      `Payment Mode: ${paymentMode}\n`,
+      `\nItems:\n`,
+      ...Array.from(orderSummary.entries()).map(
+        ([productName, { count, price }]) =>
+          `${productName} x ${count} = PHP ${(count * price).toFixed(2)}\n`,
+      ),
+      `\nTotal: PHP ${totalAmount.toFixed(2)}\n`,
+      `Received: PHP ${(cashReceived || 0).toFixed(2)}\n`,
+      `Change: PHP ${(change > 0 ? change : 0).toFixed(2)}\n`,
+      `\nThank you for your purchase!\n`,
+      "\n\n\n",
+    ];
+
     try {
       const device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: ["e7810a71-73ae-499d-8c15-faa9aef0c3f2"],
+        // acceptAllDevices: true,
+        filters: [{ name: 'POS58DB55A' }],
       });
-
-      console.log("Device selected:", device.name);
 
       if (!device.gatt) {
         throw new Error("Selected device does not support GATT.");
       }
 
       const server = await device.gatt.connect();
-      const services = await server.getPrimaryServices();
-
-      const service = services.find(
-        (s) => s.uuid === "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
+      const service = await server.getPrimaryService(
+        "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
       );
-
-      if (!service) {
-        throw new Error("Service not found on device.");
-      }
       const characteristic = await service.getCharacteristic(
         "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f",
       );
 
-      const textData = [
-        "Hello World\n",
-        "-------------------------------\n",
-        "This is a longer line of text\n",
-        "This is another line\n",
-        "This is another line\n",
-        "This is another line\n",
-        "This is another line\n",
-        "This is another line\n",
-        "This is another line\n",
-        "This is another line\n",
-        "This is another line\n",
-        "This is another line\n",
-        "\n",
-        "\n",
-        "\n",
-      ];
-
       for (const text of textData) {
         const encoder = new TextEncoder();
         const encodedText = encoder.encode(text);
-  
-        const charactersPerLine = 57;
-        const totalLines = Math.ceil(encodedText.length / charactersPerLine);
-  
-        const feedCommand = 0x0c;
-        const feedMultiplier = 3;
-  
-        const feedCommands = new Uint8Array(totalLines * feedMultiplier).fill(
-          feedCommand,
-        );
-  
-        const finalData = new Uint8Array(
-          encodedText.length + feedCommands.length,
-        );
-        finalData.set(encodedText);
-        finalData.set(feedCommands, encodedText.length);
-        await characteristic.writeValue(finalData);
+
+        await characteristic.writeValue(encodedText);
       }
 
-
-      console.log("Data sent to printer and automatic feed triggered");
+      console.log("Receipt printed successfully");
     } catch (error) {
       console.error("Bluetooth error:", error);
     }
 
-    // await createOrder.mutateAsync({
-    //   ...payload,
-    // });
+    await createOrder.mutateAsync({
+      ...payload,
+    });
   };
 
   useEffect(() => {
