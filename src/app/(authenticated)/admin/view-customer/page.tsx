@@ -9,7 +9,7 @@ import { DatePickerWithRange } from "@/components/ui/datePickerWithRange"
 import { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
 import { endOfDay } from 'date-fns'
-import formatDate, { formatCurrency, getFormattedDate } from '@/lib/utils'
+import formatDate, { formatCurrency, getFormattedDate, getFormattedDateDay } from '@/lib/utils'
 import { Input } from "@/components/ui/input"
 import {
     Tabs,
@@ -133,6 +133,71 @@ const ViewCustomer = () => {
                 id: customerId,
                 payment: Number(paymentAmount)
             }
+
+            const lineWidth = 34;
+
+            const centerText = (text: string): string => {
+                const padding = Math.floor((lineWidth - text.length) / 2);
+                return " ".repeat(padding > 0 ? padding : 0) + text;
+            };
+
+            const fullName = customer?.first_name + " " + customer?.last_name;
+            const ramainingCredit = payload.payment > currentCredit ? 0 : currentCredit - payload.payment;
+            const change = payload.payment - currentCredit > 0 ? payload.payment - currentCredit : 0;
+
+            const textData = [
+                "\n             ",
+                `${centerText("Canteen Payment")}\n`,
+                `${centerText("Management System")}\n\n`,
+                `Date: ${getFormattedDateDay()}\n`,
+                `Customer: ${fullName}\n`,
+                `\nTotal Credits: PHP ${currentCredit.toFixed(2)}\n`,
+                `Payment: PHP ${payload.payment.toFixed(2)}\n`,
+                `Remaining Credit: PHP ${ramainingCredit.toFixed(2)}\n`,
+                change > 0 ? `Change: PHP ${change.toFixed(2)}\n` : "",
+                "\n\n\n",
+            ];
+
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    // acceptAllDevices: true,
+                    filters: [{ name: "POS58DB55A" }],
+                    optionalServices: ["e7810a71-73ae-499d-8c15-faa9aef0c3f2"],
+                    // optionalServices: ["49535343-fe7d-4ae5-8fa9-9fafd205e455"],
+                });
+
+                if (!device.gatt) {
+                    throw new Error("Selected device does not support GATT.");
+                }
+
+                console.log("Attempting to connect to GATT server...");
+                const server = await device.gatt.connect();
+                console.log("Connected to GATT server");
+                // server.disconnect(); return;
+                const service = await server.getPrimaryService(
+                    "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
+                    // "49535343-fe7d-4ae5-8fa9-9fafd205e455",
+                );
+                console.log("Service found");
+                const characteristic = await service.getCharacteristic(
+                    "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f",
+                    // "49535343-aca3-481c-91ec-d85e28a60318",
+                );
+                console.log("Characteristic found");
+
+                const encoder = new TextEncoder();
+                for (const text of textData) {
+                    const encodedText = encoder.encode(text);
+                    await characteristic.writeValue(encodedText);
+                }
+
+                console.log("Receipt printed successfully");
+                server.disconnect();
+                console.log("Disconnected from GATT server");
+            } catch (error) {
+                console.error("Bluetooth error:", error);
+            }
+
 
             await creditsPayment.mutateAsync({
                 ...payload,
