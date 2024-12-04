@@ -190,10 +190,10 @@ const Transactions = () => {
                             />
                         </form>
                     </Form>
-                    <div className='flex justify-end gap-2 pt-5'>
+                    {/* <div className='flex justify-end gap-2 pt-5'>
                         <Button variant='outline' onClick={handleClear}>Clear</Button>
                         <Button>Export</Button>
-                    </div>
+                    </div> */}
                 </CardContent>
             </Card>
         </div>
