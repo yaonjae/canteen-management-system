@@ -48,7 +48,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import Receipt from "@/app/_components/receipt";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const Cashier = () => {
   const { user } = useStore();
@@ -76,6 +84,7 @@ const Cashier = () => {
     { id: String(value) },
     { enabled: Boolean(value) },
   );
+  const [isDialogOpen, setDialogOpen] = useState(false);
 
   const totalAmount = Array.from(orderSummary.values()).reduce(
     (total, { count, price }) => total + count * (isNaN(price) ? 0 : price),
@@ -190,7 +199,12 @@ const Cashier = () => {
     setCashReceived(isNaN(value) ? "" : value);
   };
 
-  const onSubmit = async () => {
+  const handlePrintReceiptConfirmation = async (printReceipt: boolean) => {
+    setDialogOpen(false);
+    await onSubmit(printReceipt);
+  };
+
+  const onSubmit = async (printReceipt: boolean) => {
     if (paymentMode === "CREDIT" && !value) {
       toast({
         variant: "destructive",
@@ -243,91 +257,93 @@ const Cashier = () => {
 
     let textData: string[];
 
-    if (paymentMode === "CASH") {
-      console.log(getFormattedDateDay());
-      
-      textData = [
-        '\n',
-        `${centerText("Canteen Payment")}\n`,
-        `${centerText("Management System")}\n\n`,
-        `Date: ${getFormattedDateDay()}\n`,
-        `Cashier: ${user?.username}\n`,
-        `Payment Mode: ${paymentMode}\n`,
-        `\nItems:\n`,
-        ...Array.from(orderSummary.entries()).map(
-          ([productName, { count, price }]) =>
-            `${productName} x ${count} = PHP ${(count * price).toFixed(2)}\n`,
-        ),
-        `\nTotal: PHP ${totalAmount.toFixed(2)}\n`,
-        `Received: PHP ${(cashReceived || 0).toFixed(2)}\n`,
-        `Change: PHP ${(change > 0 ? change : 0).toFixed(2)}\n`,
-        `\nThank you for your purchase!\n`,
-        "\n\n\n",
-      ];
-    } else {
-      const fullName = customerName?.first_name + " " + customerName?.last_name;
-      textData = [
-        '\n',
-        `${centerText("Canteen Payment")}\n`,
-        `${centerText("Management System")}\n\n`,
-        `Date: ${getFormattedDateDay()}\n`,
-        `Cashier: ${user?.username}\n`,
-        `Customer: ${fullName}\n`,
-        `Payment Mode: ${paymentMode}\n`,
-        `\nItems:\n`,
-        ...Array.from(orderSummary.entries()).map(
-          ([productName, { count, price }]) =>
-            `${productName} x ${count} = PHP ${(count * price).toFixed(2)}\n`,
-        ),
-        `\nTotal: PHP ${totalAmount.toFixed(2)}\n`,
-        `\nThank you for your purchase!\n`,
-        "\n\n\n",
-      ];
+    if (printReceipt) {
+      if (paymentMode === "CASH") {
+        console.log(getFormattedDateDay());
+  
+        textData = [
+          "\n",
+          `${centerText("Canteen Payment")}\n`,
+          `${centerText("Management System")}\n\n`,
+          `Date: ${getFormattedDateDay()}\n`,
+          `Cashier: ${user?.username}\n`,
+          `Payment Mode: ${paymentMode}\n`,
+          `\nItems:\n`,
+          ...Array.from(orderSummary.entries()).map(
+            ([productName, { count, price }]) =>
+              `${productName} x ${count} = PHP ${(count * price).toFixed(2)}\n`,
+          ),
+          `\nTotal: PHP ${totalAmount.toFixed(2)}\n`,
+          `Received: PHP ${(cashReceived || 0).toFixed(2)}\n`,
+          `Change: PHP ${(change > 0 ? change : 0).toFixed(2)}\n`,
+          `\nThank you for your purchase!\n`,
+          "\n\n\n",
+        ];
+      } else {
+        const fullName = customerName?.first_name + " " + customerName?.last_name;
+        textData = [
+          "\n",
+          `${centerText("Canteen Payment")}\n`,
+          `${centerText("Management System")}\n\n`,
+          `Date: ${getFormattedDateDay()}\n`,
+          `Cashier: ${user?.username}\n`,
+          `Customer: ${fullName}\n`,
+          `Payment Mode: ${paymentMode}\n`,
+          `\nItems:\n`,
+          ...Array.from(orderSummary.entries()).map(
+            ([productName, { count, price }]) =>
+              `${productName} x ${count} = PHP ${(count * price).toFixed(2)}\n`,
+          ),
+          `\nTotal: PHP ${totalAmount.toFixed(2)}\n`,
+          `\nThank you for your purchase!\n`,
+          "\n\n\n",
+        ];
+      }
+  
+      try {
+        const device = await navigator.bluetooth.requestDevice({
+          // acceptAllDevices: true,
+          filters: [{ name: "POS58DB55A" }],
+          optionalServices: ["e7810a71-73ae-499d-8c15-faa9aef0c3f2"],
+          // optionalServices: ["49535343-fe7d-4ae5-8fa9-9fafd205e455"],
+        });
+  
+        if (!device.gatt) {
+          throw new Error("Selected device does not support GATT.");
+        }
+  
+        console.log("Attempting to connect to GATT server...");
+        const server = await device.gatt.connect();
+        console.log("Connected to GATT server");
+        // server.disconnect(); return;
+        const service = await server.getPrimaryService(
+          "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
+          // "49535343-fe7d-4ae5-8fa9-9fafd205e455",
+        );
+        console.log("Service found");
+        const characteristic = await service.getCharacteristic(
+          "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f",
+          // "49535343-aca3-481c-91ec-d85e28a60318",
+        );
+        console.log("Characteristic found");
+  
+        const encoder = new TextEncoder();
+        for (const text of textData) {
+          const encodedText = encoder.encode(text);
+          await characteristic.writeValue(encodedText);
+        }
+  
+        console.log("Receipt printed successfully");
+        server.disconnect();
+        console.log("Disconnected from GATT server");
+      } catch (error) {
+        console.error("Bluetooth error:", error);
+      }
     }
 
-    try {
-      const device = await navigator.bluetooth.requestDevice({
-        // acceptAllDevices: true,
-        filters: [{ name: "POS58DB55A" }],
-        optionalServices: ["e7810a71-73ae-499d-8c15-faa9aef0c3f2"],
-        // optionalServices: ["49535343-fe7d-4ae5-8fa9-9fafd205e455"],
-      });
-
-      if (!device.gatt) {
-        throw new Error("Selected device does not support GATT.");
-      }
-
-      console.log("Attempting to connect to GATT server...");
-      const server = await device.gatt.connect();
-      console.log("Connected to GATT server");
-      // server.disconnect(); return;
-      const service = await server.getPrimaryService(
-        "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
-        // "49535343-fe7d-4ae5-8fa9-9fafd205e455",
-      );
-      console.log("Service found");
-      const characteristic = await service.getCharacteristic(
-        "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f",
-        // "49535343-aca3-481c-91ec-d85e28a60318",
-      );
-      console.log("Characteristic found");
-
-      const encoder = new TextEncoder();
-      for (const text of textData) {
-        const encodedText = encoder.encode(text);
-        await characteristic.writeValue(encodedText);
-      }
-
-      console.log("Receipt printed successfully");
-      server.disconnect();
-      console.log("Disconnected from GATT server");
-    } catch (error) {
-      console.error("Bluetooth error:", error);
-    }
-
-    // await createOrder.mutateAsync({
-    //   ...payload,
-    // });
+    await createOrder.mutateAsync({
+      ...payload,
+    });
   };
 
   useEffect(() => {
@@ -551,7 +567,18 @@ const Cashier = () => {
                   <Button variant="destructive" onClick={clearOrderSummary}>
                     Cancel
                   </Button>
-                  <Button onClick={() => onSubmit()}>
+                  <Button
+                    onClick={() => {
+                      if (orderSummary.size > 0) {
+                        setDialogOpen(true);
+                      } else {
+                        toast({
+                          variant: "destructive",
+                          title: "No items in the order summary.",
+                        });
+                      }
+                    }}
+                  >
                     {loader ? (
                       <>
                         <LoaderCircle className="animate-spin" />
@@ -569,6 +596,22 @@ const Cashier = () => {
           </CardContent>
         </Card>
       </div>
+      <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Receipt Printing</DialogTitle>
+            <DialogDescription>
+              Do you want to print a receipt for this transaction?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => handlePrintReceiptConfirmation(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => handlePrintReceiptConfirmation(true)}>Confirm</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
