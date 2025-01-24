@@ -146,7 +146,7 @@ const ViewCustomer = () => {
             const change = payload.payment - currentCredit > 0 ? payload.payment - currentCredit : 0;
 
             const textData = [
-                "\n             ",
+                "\n",
                 `${centerText("Canteen Payment")}\n`,
                 `${centerText("Management System")}\n\n`,
                 `Date: ${getFormattedDateDay()}\n`,
@@ -254,7 +254,7 @@ const ViewCustomer = () => {
                                 <TableBody>
                                     {orders?.orders.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center">
+                                            <TableCell colSpan={7} className="text-center">
                                                 No order available
                                             </TableCell>
                                         </TableRow>
