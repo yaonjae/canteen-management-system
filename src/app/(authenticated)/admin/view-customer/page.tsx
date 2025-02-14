@@ -145,16 +145,31 @@ const ViewCustomer = () => {
             const ramainingCredit = payload.payment > currentCredit ? 0 : currentCredit - payload.payment;
             const change = payload.payment - currentCredit > 0 ? payload.payment - currentCredit : 0;
 
+            let orderDetails = "";
+            let totalCost = 0;
+            if (orders?.orders) {
+                orders.orders.forEach((order) => {
+                    order.Orders.forEach((item) => {
+                        orderDetails += `${item.Product.name.toUpperCase()} (${item.quantity}) : PHP ${item.Product.amount.toFixed(2)} = PHP ${(item.Product.amount * item.quantity).toFixed(2)}\n`;
+                        totalCost += item.Product.amount * item.quantity;
+                    });
+                });
+            }
+
             const textData = [
                 "\n",
                 `${centerText("Canteen Payment")}\n`,
                 `${centerText("Management System")}\n\n`,
                 `Date: ${getFormattedDateDay()}\n`,
                 `Customer: ${fullName}\n`,
-                `\nTotal Credits: PHP ${currentCredit.toFixed(2)}\n`,
+                `\nTotal Cost: PHP ${totalCost.toFixed(2)}\n`,
+                `Total Paid: PHP ${(totalCost - currentCredit).toFixed(2)}\n\n`,
+                `Total Credits: PHP ${currentCredit.toFixed(2)}\n`,
                 `Payment: PHP ${payload.payment.toFixed(2)}\n`,
-                `Remaining Credit: PHP ${ramainingCredit.toFixed(2)}\n`,
+                `Remaining Credit: PHP ${remainingCredit.toFixed(2)}\n`,
                 change > 0 ? `Change: PHP ${change.toFixed(2)}\n` : "",
+                "\nOrders:\n",
+                orderDetails,
                 "\n\n\n",
             ];
 
