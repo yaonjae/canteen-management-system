@@ -262,7 +262,7 @@ const Cashier = () => {
         console.log(getFormattedDateDay());
   
         textData = [
-          "\n             ",
+          "\n",
           `${centerText("Canteen Payment")}\n`,
           `${centerText("Management System")}\n\n`,
           `Date: ${getFormattedDateDay()}\n`,

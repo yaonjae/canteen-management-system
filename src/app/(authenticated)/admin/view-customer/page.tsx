@@ -162,14 +162,14 @@ const ViewCustomer = () => {
                 `${centerText("Management System")}\n\n`,
                 `Date: ${getFormattedDateDay()}\n`,
                 `Customer: ${fullName}\n`,
+                "\nOrders:\n",
+                orderDetails,
                 `\nTotal Cost: PHP ${totalCost.toFixed(2)}\n`,
                 `Total Paid: PHP ${(totalCost - currentCredit).toFixed(2)}\n\n`,
                 `Total Credits: PHP ${currentCredit.toFixed(2)}\n`,
                 `Payment: PHP ${payload.payment.toFixed(2)}\n`,
                 `Remaining Credit: PHP ${remainingCredit.toFixed(2)}\n`,
                 change > 0 ? `Change: PHP ${change.toFixed(2)}\n` : "",
-                "\nOrders:\n",
-                orderDetails,
                 "\n\n\n",
             ];
 
