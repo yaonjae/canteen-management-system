@@ -282,7 +282,7 @@ const Cashier = () => {
       } else {
         const fullName = customerName?.first_name + " " + customerName?.last_name;
         textData = [
-          "\n             ",
+          "\n",
           `${centerText("Canteen Payment")}\n`,
           `${centerText("Management System")}\n\n`,
           `Date: ${getFormattedDateDay()}\n`,
