@@ -9,7 +9,7 @@ import { DatePickerWithRange } from "@/components/ui/datePickerWithRange"
 import { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
 import { endOfDay } from 'date-fns'
-import formatDate, { formatCurrency, getFormattedDate, getFormattedDateDay } from '@/lib/utils'
+import formatDate, { formatCurrency, getFormattedDate, getFormattedDateDay, getFormattedTime } from '@/lib/utils'
 import { Input } from "@/components/ui/input"
 import {
     Tabs,
@@ -162,10 +162,7 @@ const ViewCustomer = () => {
                 `${centerText("Management System")}\n\n`,
                 `Date: ${getFormattedDateDay()}\n`,
                 `Customer: ${fullName}\n`,
-                "\nOrders:\n",
-                orderDetails,
-                `\nTotal Cost: PHP ${totalCost.toFixed(2)}\n`,
-                `Total Paid: PHP ${(totalCost - currentCredit).toFixed(2)}\n\n`,
+                `Time: ${getFormattedTime()}\n\n`,
                 `Total Credits: PHP ${currentCredit.toFixed(2)}\n`,
                 `Payment: PHP ${payload.payment.toFixed(2)}\n`,
                 `Remaining Credit: PHP ${remainingCredit.toFixed(2)}\n`,

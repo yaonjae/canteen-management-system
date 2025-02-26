@@ -40,3 +40,12 @@ export function formatCurrency(amount: number) {
     currency: "PHP",
   }).format(amount);
 }
+
+export function getFormattedTime(): string {
+  return new Date().toLocaleString("en-US", {
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+    hour12: true,
+  });
+}
