@@ -218,6 +218,90 @@ const ViewCustomer = () => {
 
     }
 
+    const printOrders = async () => {
+        if (customerId) {
+            const payload = {
+                id: customerId,
+                payment: Number(paymentAmount)
+            }
+
+            const lineWidth = 34;
+
+            const centerText = (text: string): string => {
+                const padding = Math.floor((lineWidth - text.length) / 2);
+                return " ".repeat(padding > 0 ? padding : 0) + text;
+            };
+
+            const fullName = customer?.first_name + " " + customer?.last_name;
+            const ramainingCredit = payload.payment > currentCredit ? 0 : currentCredit - payload.payment;
+            const change = payload.payment - currentCredit > 0 ? payload.payment - currentCredit : 0;
+
+            let orderDetails = "";
+            let totalCost = 0;
+            if (orders?.orders) {
+                orders.orders.forEach((order) => {
+                    order.Orders.forEach((item) => {
+                        orderDetails += `${item.Product.name.toUpperCase()} (${item.quantity}) : PHP ${item.Product.amount.toFixed(2)} = PHP ${(item.Product.amount * item.quantity).toFixed(2)}\n`;
+                        totalCost += item.Product.amount * item.quantity;
+                    });
+                });
+            }
+
+            const textData = [
+                "\n",
+                `${centerText("Canteen Payment")}\n`,
+                `${centerText("Management System")}\n\n`,
+                `Date: ${getFormattedDateDay()}\n`,
+                `Customer: ${fullName}\n`,
+                `Time: ${getFormattedTime()}\n\n`,
+                "Orders:\n",
+                orderDetails,
+                `\nTotal Cost: PHP ${totalCost.toFixed(2)}\n`,
+                "\n\n\n",
+            ];
+            
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    // acceptAllDevices: true,
+                    filters: [{ name: "POS58DB55A" }],
+                    optionalServices: ["e7810a71-73ae-499d-8c15-faa9aef0c3f2"],
+                    // optionalServices: ["49535343-fe7d-4ae5-8fa9-9fafd205e455"],
+                });
+
+                if (!device.gatt) {
+                    throw new Error("Selected device does not support GATT.");
+                }
+
+                console.log("Attempting to connect to GATT server...");
+                const server = await device.gatt.connect();
+                console.log("Connected to GATT server");
+                // server.disconnect(); return;
+                const service = await server.getPrimaryService(
+                    "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
+                    // "49535343-fe7d-4ae5-8fa9-9fafd205e455",
+                );
+                console.log("Service found");
+                const characteristic = await service.getCharacteristic(
+                    "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f",
+                    // "49535343-aca3-481c-91ec-d85e28a60318",
+                );
+                console.log("Characteristic found");
+
+                const encoder = new TextEncoder();
+                for (const text of textData) {
+                    const encodedText = encoder.encode(text);
+                    await characteristic.writeValue(encodedText);
+                }
+
+                console.log("Receipt printed successfully");
+                server.disconnect();
+                console.log("Disconnected from GATT server");
+            } catch (error) {
+                console.error("Bluetooth error:", error);
+            }
+        }
+    }
+
     return (
         <>
             <Tabs defaultValue="list" className="max-w-6xl mx-auto py-5">
@@ -249,6 +333,7 @@ const ViewCustomer = () => {
                                 <div className='flex items-center justify-end gap-4'>
                                     <p className='font-bold'>Current Credit: {formatCurrency(orders?.total_cost || 0)}</p>
                                     <Button onClick={handlePayClick}>Pay</Button>
+                                    <Button onClick={printOrders} variant={'outline'}>Print</Button>
                                 </div>
                             </div>
                             <Table>
