@@ -217,7 +217,7 @@ const Cashier = () => {
     if (
       paymentMode === "CASH" &&
       (typeof cashReceived === "string" ? Number(cashReceived) : cashReceived) <
-        totalAmount
+      totalAmount
     ) {
       toast({
         variant: "destructive",
@@ -260,7 +260,7 @@ const Cashier = () => {
     if (printReceipt) {
       if (paymentMode === "CASH") {
         console.log(getFormattedDateDay());
-  
+
         textData = [
           "\n",
           `${centerText("Canteen Payment")}\n`,
@@ -299,7 +299,7 @@ const Cashier = () => {
           "\n\n\n",
         ];
       }
-  
+
       try {
         const device = await navigator.bluetooth.requestDevice({
           // acceptAllDevices: true,
@@ -307,11 +307,11 @@ const Cashier = () => {
           optionalServices: ["e7810a71-73ae-499d-8c15-faa9aef0c3f2"],
           // optionalServices: ["49535343-fe7d-4ae5-8fa9-9fafd205e455"],
         });
-  
+
         if (!device.gatt) {
           throw new Error("Selected device does not support GATT.");
         }
-  
+
         console.log("Attempting to connect to GATT server...");
         const server = await device.gatt.connect();
         console.log("Connected to GATT server");
@@ -326,13 +326,13 @@ const Cashier = () => {
           // "49535343-aca3-481c-91ec-d85e28a60318",
         );
         console.log("Characteristic found");
-  
+
         const encoder = new TextEncoder();
         for (const text of textData) {
           const encodedText = encoder.encode(text);
           await characteristic.writeValue(encodedText);
         }
-  
+
         console.log("Receipt printed successfully");
         server.disconnect();
         console.log("Disconnected from GATT server");
@@ -366,10 +366,15 @@ const Cashier = () => {
     <div className="mx-auto max-w-7xl pt-5">
       <div className="flex items-center justify-between">
         <p className="font-bold uppercase">{user?.username}</p>
-        <Button onClick={logout}>
-          <LogOut />
-          Logout
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push('/cashier/sales')}>
+            Sales
+          </Button>
+          <Button onClick={logout}>
+            <LogOut />
+            Logout
+          </Button>
+        </div>
       </div>
       <div className="flex gap-2 py-5">
         <div className="w-8/12 flex-1 space-y-4">
