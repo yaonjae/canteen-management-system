@@ -125,7 +125,7 @@ const Products = () => {
                                     <div className="space-y-2">
                                         <h2 className="font-bold uppercase">{product.name}</h2>
                                         <p>{product.Category.name}</p>
-                                        <p>₱{product.amount.toFixed(2)}</p>
+                                        <p>₱{product.amount !== null ? product.amount.toFixed(2) : 0}</p>
                                         <hr />
                                         <div className="flex justify-between items-center">
                                             <Label htmlFor="status">{product.status !== 'AVAILABLE' ? 'NOT AVAILABLE' : 'AVAILABLE'}</Label>

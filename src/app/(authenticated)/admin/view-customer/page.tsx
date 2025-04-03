@@ -150,8 +150,8 @@ const ViewCustomer = () => {
             if (orders?.orders) {
                 orders.orders.forEach((order) => {
                     order.Orders.forEach((item) => {
-                        orderDetails += `${item.Product.name.toUpperCase()} (${item.quantity}) : PHP ${item.Product.amount.toFixed(2)} = PHP ${(item.Product.amount * item.quantity).toFixed(2)}\n`;
-                        totalCost += item.Product.amount * item.quantity;
+                        orderDetails += `${item.Product.name.toUpperCase()} (${item.quantity}) : PHP ${item.Product.amount !== null ? item.Product.amount.toFixed(2) : 0} = PHP ${((item.Product.amount !== null ? item.Product.amount : 0) * item.quantity).toFixed(2)}\n`;
+                        totalCost += item.Product.amount || 0 * item.quantity;
                     });
                 });
             }
@@ -241,8 +241,8 @@ const ViewCustomer = () => {
             if (orders?.orders) {
                 orders.orders.forEach((order) => {
                     order.Orders.forEach((item) => {
-                        orderDetails += `${item.Product.name.toUpperCase()} (${item.quantity}) : PHP ${item.Product.amount.toFixed(2)} = PHP ${(item.Product.amount * item.quantity).toFixed(2)}\n`;
-                        totalCost += item.Product.amount * item.quantity;
+                        orderDetails += `${item.Product.name.toUpperCase()} (${item.quantity}) : PHP ${item.Product.amount !== null ? item.Product.amount.toFixed(2) : 0} = PHP ${((item.Product.amount !== null ? item.Product.amount : 0) * item.quantity).toFixed(2)}\n`;
+                        totalCost += (item.Product.amount !== null ? item.Product.amount : 0) * item.quantity;
                     });
                 });
             }
@@ -363,8 +363,8 @@ const ViewCustomer = () => {
                                                     <TableCell>{formatDate(order.createdAt)}</TableCell>
                                                     <TableCell>{orderItem.Product.name}</TableCell>
                                                     <TableCell>{orderItem.quantity}</TableCell>
-                                                    <TableCell>{formatCurrency(orderItem.Product.amount)}</TableCell>
-                                                    <TableCell>{formatCurrency(orderItem.Product.amount * orderItem.quantity)}</TableCell>
+                                                    <TableCell>{formatCurrency(orderItem.Product.amount || 0)}</TableCell>
+                                                    <TableCell>{formatCurrency((orderItem.Product.amount !== null ? orderItem.Product.amount : 0) * orderItem.quantity)}</TableCell>
                                                     <TableCell>{formatCurrency(order.total_paid)}</TableCell>
                                                 </TableRow>
                                             ))

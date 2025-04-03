@@ -147,7 +147,7 @@ export default function AddItem() {
             form.reset({
                 name: product.name,
                 category: product.category_id,
-                amount: product.amount.toString(),
+                amount: product.amount !== null ? product.amount.toString() : "",
                 image: undefined,
             });
         }
