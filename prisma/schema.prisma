@@ -35,7 +35,7 @@ model Cashier {
 }
 
 model Customer {
-    id             String      @id
+    id             String   @id
     first_name     String
     last_name      String
     contact_number String?
@@ -55,25 +55,48 @@ model Category {
 }
 
 model Product {
-    id          Int            @id @default(autoincrement())
-    name        String
-    amount      Float
-    image_url   String
-    category_id Int
-    status      product_status
-    createdAt   DateTime       @default(now())
-    updatedAt   DateTime       @updatedAt
-    Category    Category       @relation(fields: [category_id], references: [id])
-    Orders      Orders[]
+    id                  Int                   @id @default(autoincrement())
+    name                String
+    amount      Float?
+    image_url           String
+    category_id         Int
+    status              product_status
+    createdAt           DateTime              @default(now())
+    updatedAt           DateTime              @updatedAt
+    Category            Category              @relation(fields: [category_id], references: [id])
+    Orders              Orders[]
+    ProductPriceHistory ProductPriceHistory[]
+
+    StockHistory StockHistory[]
+}
+
+model ProductPriceHistory {
+    id         Int      @id @default(autoincrement())
+    product_id Int
+    amount     Float
+    createdAt  DateTime @default(now())
+    Product    Product  @relation(fields: [product_id], references: [id])
+    Orders     Orders[]
 }
 
 model Orders {
-    id             Int         @id @default(autoincrement())
-    product_id     Int
-    transaction_id Int
-    quantity       Int
-    Product        Product     @relation(fields: [product_id], references: [id], onDelete: Cascade)
-    Transaction    Transaction @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
+    id               Int                 @id @default(autoincrement())
+    product_id       Int
+    product_price_id Int?
+    transaction_id   Int
+    quantity         Int
+    Product          Product             @relation(fields: [product_id], references: [id], onDelete: Cascade)
+    ProductPrice     ProductPriceHistory? @relation(fields: [product_price_id], references: [id], onDelete: Cascade)
+    Transaction      Transaction         @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
+}
+
+model StockHistory {
+    id         Int      @id @default(autoincrement())
+    product_id Int
+    quantity   Int
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+    Product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
 }
 
 model Transaction {

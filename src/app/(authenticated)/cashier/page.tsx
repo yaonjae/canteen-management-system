@@ -358,6 +358,10 @@ const Cashier = () => {
     }
   }, [cashReceived, totalAmount]);
 
+  const productPopulate = () => {
+
+  }
+
   return (
     <div className="mx-auto max-w-7xl pt-5">
       <div className="flex items-center justify-between">
@@ -419,7 +423,7 @@ const Cashier = () => {
                   />
                   <p className="absolute bottom-0 left-0 flex w-full items-center justify-between rounded-b-lg bg-gradient-to-b from-transparent to-blue-950 p-3 pt-14 text-sm text-white">
                     <span>{product.name}</span>
-                    <span>{formatCurrency(product.amount)}</span>
+                    <span>{formatCurrency(product.amount || 0)}</span>
                   </p>
                 </div>
               ))
@@ -488,7 +492,7 @@ const Cashier = () => {
                       <Label htmlFor="credit">CREDIT</Label>
                     </div>
                   </RadioGroup>
-                  <div className="flex items-center justify-start gap-2">
+                  {/* <div className="flex items-center justify-start gap-2">
                     <Label className="w-56">Customer:</Label>
                     <Popover open={open} onOpenChange={setOpen}>
                       <PopoverTrigger asChild>
@@ -540,7 +544,7 @@ const Cashier = () => {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                  </div>
+                  </div> */}
                   {paymentMode === "CASH" && (
                     <>
                       <div className="flex items-center justify-start gap-2">
