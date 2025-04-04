@@ -8,6 +8,7 @@ import { customerRouter } from "./routers/customer";
 import { dashboardRouter } from "./routers/dashboard";
 import { orderRouter } from "./routers/order";
 import { cashierRouter } from "./routers/cashier";
+import { stockRouter } from "./routers/stock";
 
 /**
  * This is the primary router for your server.
@@ -18,6 +19,7 @@ export const appRouter = createTRPCRouter({
   admin:adminRouter,
   category:categoryRouter,
   product:productRouter,
+  stock:stockRouter,
   transaction:transactionRouter,
   employee:employeeRouter,
   customer:customerRouter,

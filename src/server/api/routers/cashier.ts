@@ -14,6 +14,7 @@ export const cashierRouter = createTRPCRouter({
                     z.object({
                         productId: z.number(),
                         quantity: z.number(),
+                        product_price_id: z.number(),
                     })
                 ),
             })
@@ -32,6 +33,7 @@ export const cashierRouter = createTRPCRouter({
                     Orders: {
                         create: orders.map((order) => ({
                             product_id: order.productId,
+                            product_price_id: order.product_price_id,
                             quantity: order.quantity
                         }))
                     }
@@ -67,6 +69,12 @@ export const cashierRouter = createTRPCRouter({
             },
             include: {
                 Category: true,
+                ProductPriceHistory: {
+                    orderBy: {
+                        createdAt: 'desc'
+                    },
+                    take: 1
+                }
             },
             orderBy: {
                 name: 'asc',

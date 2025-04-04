@@ -18,10 +18,14 @@ export const productRouter = createTRPCRouter({
             const newProduct = await ctx.db.product.create({
                 data: {
                     name,
-                    amount,
                     image_url: image,
                     category_id: category,
                     status: "AVAILABLE",
+                    ProductPriceHistory: {
+                        create: {
+                            amount,
+                        },
+                    },
                 },
             });
 
@@ -44,15 +48,36 @@ export const productRouter = createTRPCRouter({
                 take: pageSize,
                 include: {
                     Category: true,
+                    ProductPriceHistory: {
+                        orderBy: {
+                            createdAt: 'desc',
+                        },
+                        take: 1,
+                    },
+                    StockHistory: {
+                        orderBy: {
+                            createdAt: 'desc',
+                        },
+                    },
                 },
                 orderBy: {
                     name: 'asc',
                 },
             });
 
+            const latestData = products.map(product => {
+                const latestPriceHistory = product.ProductPriceHistory[0];
+                const totalQuantity = product.StockHistory.reduce((sum, stock) => sum + stock.quantity, 0);
+                return {
+                    ...product,
+                    amount: latestPriceHistory ? latestPriceHistory.amount : 0,
+                    quantity: totalQuantity,
+                };
+            });
+
             const totalProducts = await ctx.db.product.count();
 
-            return { products, totalProducts };
+            return { products: latestData, totalProducts };
         }),
 
     update: publicProcedure
@@ -71,9 +96,13 @@ export const productRouter = createTRPCRouter({
                 where: { id },
                 data: {
                     name,
-                    amount,
                     image_url: image,
                     category_id: category,
+                    ProductPriceHistory: {
+                        create: {
+                            amount,
+                        },
+                    },
                 },
             });
         }),
@@ -106,9 +135,34 @@ export const productRouter = createTRPCRouter({
     getProductById: publicProcedure
         .input(z.object({ id: z.number().int() }))
         .query(async ({ ctx, input }) => {
-            return await ctx.db.product.findUnique({
+            const product = await ctx.db.product.findUnique({
                 where: { id: input.id },
-                include: { Category: true },
+                include: {
+                    Category: true,
+                    ProductPriceHistory: {
+                        orderBy: {
+                            createdAt: 'desc',
+                        },
+                        take: 1,
+                    },
+                    StockHistory: {
+                        orderBy: {
+                            createdAt: 'desc',
+                        },
+                    },
+                },
             });
+
+            if (product) {
+                const latestPriceHistory = product.ProductPriceHistory[0];
+                const totalQuantity = product.StockHistory.reduce((sum, stock) => sum + stock.quantity, 0);
+                return {
+                    ...product,
+                    amount: latestPriceHistory ? latestPriceHistory.amount : 0,
+                    quantity: totalQuantity,
+                };
+            }    
+
+            return null;
         }),
 });

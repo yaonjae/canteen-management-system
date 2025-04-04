@@ -122,10 +122,11 @@ const Products = () => {
                             <Card className="w-56" key={product.id}>
                                 <CardContent className="pt-5 space-y-3">
                                     <img src={product.image_url} alt="" className="w-full h-32 object-cover" />
-                                    <div className="space-y-2">
+                                    <div className="space-y-1">
                                         <h2 className="font-bold uppercase">{product.name}</h2>
                                         <p>{product.Category.name}</p>
                                         <p>₱{product.amount !== null ? product.amount.toFixed(2) : 0}</p>
+                                        <p>{product.quantity}</p>
                                         <hr />
                                         <div className="flex justify-between items-center">
                                             <Label htmlFor="status">{product.status !== 'AVAILABLE' ? 'NOT AVAILABLE' : 'AVAILABLE'}</Label>

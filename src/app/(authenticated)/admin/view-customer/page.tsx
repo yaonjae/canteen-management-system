@@ -150,8 +150,8 @@ const ViewCustomer = () => {
             if (orders?.orders) {
                 orders.orders.forEach((order) => {
                     order.Orders.forEach((item) => {
-                        orderDetails += `${item.Product.name.toUpperCase()} (${item.quantity}) : PHP ${item.Product.amount !== null ? item.Product.amount.toFixed(2) : 0} = PHP ${((item.Product.amount !== null ? item.Product.amount : 0) * item.quantity).toFixed(2)}\n`;
-                        totalCost += item.Product.amount || 0 * item.quantity;
+                        orderDetails += `${item.Product.name.toUpperCase()} (${item.quantity}) : PHP ${item.ProductPrice.amount !== null ? item.ProductPrice.amount.toFixed(2) : 0} = PHP ${((item.ProductPrice.amount !== null ? item.ProductPrice.amount : 0) * item.quantity).toFixed(2)}\n`;
+                        totalCost += item.ProductPrice.amount || 0 * item.quantity;
                     });
                 });
             }
@@ -241,8 +241,8 @@ const ViewCustomer = () => {
             if (orders?.orders) {
                 orders.orders.forEach((order) => {
                     order.Orders.forEach((item) => {
-                        orderDetails += `${item.Product.name.toUpperCase()} (${item.quantity}) : PHP ${item.Product.amount !== null ? item.Product.amount.toFixed(2) : 0} = PHP ${((item.Product.amount !== null ? item.Product.amount : 0) * item.quantity).toFixed(2)}\n`;
-                        totalCost += (item.Product.amount !== null ? item.Product.amount : 0) * item.quantity;
+                        orderDetails += `${item.Product.name.toUpperCase()} (${item.quantity}) : PHP ${item.ProductPrice.amount !== null ? item.ProductPrice.amount.toFixed(2) : 0} = PHP ${((item.ProductPrice.amount !== null ? item.ProductPrice.amount : 0) * item.quantity).toFixed(2)}\n`;
+                        totalCost += (item.ProductPrice.amount !== null ? item.ProductPrice.amount : 0) * item.quantity;
                     });
                 });
             }
@@ -259,7 +259,7 @@ const ViewCustomer = () => {
                 `\nTotal Cost: PHP ${totalCost.toFixed(2)}\n`,
                 "\n\n\n",
             ];
-            
+
             try {
                 const device = await navigator.bluetooth.requestDevice({
                     // acceptAllDevices: true,
@@ -349,7 +349,7 @@ const ViewCustomer = () => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {orders?.orders.length === 0 ? (
+                                    {/* {orders?.orders.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={7} className="text-center">
                                                 No order available
@@ -363,13 +363,51 @@ const ViewCustomer = () => {
                                                     <TableCell>{formatDate(order.createdAt)}</TableCell>
                                                     <TableCell>{orderItem.Product.name}</TableCell>
                                                     <TableCell>{orderItem.quantity}</TableCell>
-                                                    <TableCell>{formatCurrency(orderItem.Product.amount || 0)}</TableCell>
-                                                    <TableCell>{formatCurrency((orderItem.Product.amount !== null ? orderItem.Product.amount : 0) * orderItem.quantity)}</TableCell>
+                                                    <TableCell>{formatCurrency(orderItem.ProductPrice?.amount || 0)}</TableCell>
+                                                    <TableCell>{formatCurrency((orderItem.ProductPrice?.amount !== undefined ? orderItem.ProductPrice?.amount : 0) * orderItem.quantity)}</TableCell>
                                                     <TableCell>{formatCurrency(order.total_paid)}</TableCell>
                                                 </TableRow>
                                             ))
                                         )
-                                    )}
+                                    )} */}
+                                    {orders?.orders.flatMap((order) => {
+                                        let remainingPaid = order.total_paid;
+                                        const reversedOrders = [...order.Orders].reverse();
+                                        const processedRows = reversedOrders.map((orderItem) => {
+                                            const amount = orderItem.ProductPrice?.amount || 0;
+                                            const rowTotal = amount * orderItem.quantity;
+                                            let rowPaid = 0;
+                                            if (remainingPaid >= rowTotal) {
+                                                rowPaid = rowTotal;
+                                                remainingPaid -= rowTotal;
+                                            } else if (remainingPaid > 0) {
+                                                rowPaid = remainingPaid;
+                                                remainingPaid = 0;
+                                            }
+                                            return {
+                                                id: order.id,
+                                                createdAt: order.createdAt,
+                                                productName: orderItem.Product.name,
+                                                quantity: orderItem.quantity,
+                                                amount,
+                                                rowTotal,
+                                                rowPaid,
+                                                key: `${order.id}-${orderItem.id}`,
+                                            };
+                                        });
+
+                                        return processedRows.reverse().map((row) => (
+                                            <TableRow key={row.key}>
+                                                <TableCell>{row.id}</TableCell>
+                                                <TableCell>{formatDate(row.createdAt)}</TableCell>
+                                                <TableCell>{row.productName}</TableCell>
+                                                <TableCell>{row.quantity}</TableCell>
+                                                <TableCell>{formatCurrency(row.amount)}</TableCell>
+                                                <TableCell>{formatCurrency(row.rowTotal)}</TableCell>
+                                                <TableCell>{formatCurrency(row.rowPaid)}</TableCell>
+                                            </TableRow>
+                                        ));
+                                    })}
                                 </TableBody>
                             </Table>
                             {Math.ceil((orders?.totalOrders || 0) / itemsPerPage) > 1 && (

@@ -12,9 +12,11 @@ const CardLoader = () => {
                         <div className="bg-neutral-400/50 w-full h-4 animate-pulse rounded-md"></div>
                         <div className="bg-neutral-400/50 w-4/5 h-4 animate-pulse rounded-md"></div>
                         <div className="bg-neutral-400/50 w-2/4 h-4 animate-pulse rounded-md"></div>
+                        <div className="bg-neutral-400/50 w-1/4 h-4 animate-pulse rounded-md"></div>
                         <div className="bg-neutral-400/50 w-full h-4 animate-pulse rounded-md"></div>
                     </div>
-                    <div className='flex gap-2 p-3'>
+                    <div className='flex gap-2'>
+                        <div className="bg-neutral-400/50 size-10 animate-pulse rounded-md"></div>
                         <div className="bg-neutral-400/50 size-10 animate-pulse rounded-md"></div>
                         <div className="bg-neutral-400/50 size-10 animate-pulse rounded-md"></div>
                     </div>

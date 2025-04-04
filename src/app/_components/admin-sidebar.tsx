@@ -1,5 +1,5 @@
 'use client'
-import { LayoutDashboard, PackagePlus, Package, ListCollapse, ArrowLeftRight, ChartNoAxesCombined, CircleUser, Users, ChevronDown, UserPen, LogOut } from "lucide-react"
+import { LayoutDashboard, PackagePlus, Package, ListCollapse, ArrowLeftRight, ChartNoAxesCombined, CircleUser, Users, ChevronDown, UserPen, LogOut, ChartNoAxesColumnIncreasing } from "lucide-react"
 import {
     Sidebar,
     SidebarContent,
@@ -22,6 +22,7 @@ const items: SidebarItem[] = [
     { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
     { title: "Products", url: "/admin/products", icon: Package },
     { title: "Category", url: "/admin/category", icon: ListCollapse },
+    { title: "Stocks", url: "/admin/stock", icon: ChartNoAxesColumnIncreasing },
     { title: "Transaction", url: "/admin/transactions", icon: ArrowLeftRight },
     { title: "Sales", url: "/admin/sales", icon: ChartNoAxesCombined },
     { title: "Employee", url: "/admin/employees", icon: CircleUser },

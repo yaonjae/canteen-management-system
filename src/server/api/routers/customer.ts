@@ -102,6 +102,7 @@ export const customerRouter = createTRPCRouter({
                     Orders: {
                         include: {
                             Product: true,
+                            ProductPrice: true
                         },
                     },
                     PaymentRecordList: true,
@@ -113,6 +114,7 @@ export const customerRouter = createTRPCRouter({
                 skip,
                 take: itemsPerPage,
             });
+            
 
             const totalOrders = await ctx.db.transaction.count({
                 where: {
@@ -237,7 +239,7 @@ export const customerRouter = createTRPCRouter({
                         })
                     }
 
-                    remainingPayment -= outstandingBalance;
+                    remainingPayment -= transaction.total_cost;
                 } else {
                     const transactionProcess = await ctx.db.transaction.update({
                         where: { id: transaction.id },

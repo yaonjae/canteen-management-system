@@ -57,7 +57,6 @@ model Category {
 model Product {
     id                  Int                   @id @default(autoincrement())
     name                String
-    amount      Float?
     image_url           String
     category_id         Int
     status              product_status
@@ -66,7 +65,6 @@ model Product {
     Category            Category              @relation(fields: [category_id], references: [id])
     Orders              Orders[]
     ProductPriceHistory ProductPriceHistory[]
-
     StockHistory StockHistory[]
 }
 
@@ -82,11 +80,11 @@ model ProductPriceHistory {
 model Orders {
     id               Int                 @id @default(autoincrement())
     product_id       Int
-    product_price_id Int?
+    product_price_id Int
     transaction_id   Int
     quantity         Int
     Product          Product             @relation(fields: [product_id], references: [id], onDelete: Cascade)
-    ProductPrice     ProductPriceHistory? @relation(fields: [product_price_id], references: [id], onDelete: Cascade)
+    ProductPrice     ProductPriceHistory @relation(fields: [product_price_id], references: [id])
     Transaction      Transaction         @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
 }
 

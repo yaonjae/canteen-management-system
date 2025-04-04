@@ -182,7 +182,7 @@ const Cashier = () => {
         const newSummary = new Map(prev);
         const currentItem = newSummary.get(product.name) || {
           count: 0,
-          price: Number(product.amount),
+          price: Number(product.ProductPriceHistory[0]?.amount || 0),
         };
         const validPrice = isNaN(currentItem.price) ? 0 : currentItem.price;
         newSummary.set(product.name, {
@@ -232,6 +232,7 @@ const Cashier = () => {
         const product = products?.find((prod) => prod.name === productName);
         return {
           productId: product?.id ?? 0,
+          product_price_id: product?.ProductPriceHistory[0]?.amount ?? 0,
           quantity: count,
           price: price,
           total: count * price,
@@ -428,7 +429,7 @@ const Cashier = () => {
                   />
                   <p className="absolute bottom-0 left-0 flex w-full items-center justify-between rounded-b-lg bg-gradient-to-b from-transparent to-blue-950 p-3 pt-14 text-sm text-white">
                     <span>{product.name}</span>
-                    <span>{formatCurrency(product.amount || 0)}</span>
+                    <span>{formatCurrency(product.ProductPriceHistory[0]?.amount || 0)}</span>
                   </p>
                 </div>
               ))
