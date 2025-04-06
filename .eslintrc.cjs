@@ -27,6 +27,7 @@ const config = {
     "@typescript-eslint/no-empty-interface":"off",
     "@typescript-eslint/no-misused-promises":"off",
     "@typescript-eslint/no-empty-function":"off",
+    "@typescript-eslint/no-unsafe-argument":"off",
     "@typescript-eslint/consistent-type-imports": [
       "warn",
       {
