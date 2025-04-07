@@ -83,6 +83,20 @@ export const productRouter = createTRPCRouter({
       return { products: latestData, totalProducts };
     }),
 
+  getProductsHistory: publicProcedure
+    .input(z.object({ product_id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const { product_id } = input;
+      return await ctx.db.productPriceHistory.findMany({
+        where: {
+          product_id
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      })
+    }),
+
   update: publicProcedure
     .input(
       z.object({

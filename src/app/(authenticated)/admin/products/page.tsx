@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Pencil, Trash } from 'lucide-react'
+import { Pencil, TableOfContents, Trash } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/trpc/react'
@@ -13,12 +13,15 @@ import { getFormattedDate } from '@/lib/utils'
 import CardLoader from '@/app/_components/card-loader'
 import DeleteDialog from '@/app/_components/delete-dialog'
 import PaginationComponent from '@/app/_components/pagination'
+import ViewDialog from '@/app/_components/view-dialog'
 
 const Products = () => {
     const router = useRouter()
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(20)
+    const [selectedProduct, setSelectedProduct] = useState(0)
     const { data, isLoading, refetch } = api.product.getProducts.useQuery({ page: currentPage, pageSize })
+    const { data: productHistory, refetch: refetchHistory } = api.product.getProductsHistory.useQuery({ product_id: selectedProduct })
     const { toast } = useToast()
     const [searchQuery, setSearchQuery] = useState('')
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -70,6 +73,10 @@ const Products = () => {
         router.push(`/admin/add-products?id=${productId}`);
     };
 
+    const handleViewHistory = (productId: number) => {
+        setSelectedProduct(productId)
+    }
+
     const handleDelete = (id: number) => {
         setSelectedProductId(id)
         setIsDeleteDialogOpen(true)
@@ -91,6 +98,10 @@ const Products = () => {
     useEffect(() => {
         refetch();
     }, [currentPage, pageSize]);
+
+    useEffect(() => {
+        refetchHistory()
+    }, [selectedProduct])
 
     return (
         <Card className="max-w-5xl mx-auto py-5">
@@ -136,6 +147,7 @@ const Products = () => {
                                 </CardContent>
                                 <CardFooter className="space-x-2">
                                     <Button size="sm" variant="outline" onClick={() => handleEdit(product.id)}><Pencil /></Button>
+                                    <Button size="sm" variant="outline" onClick={() => handleViewHistory(product.id)}><TableOfContents /></Button>
                                     <Button size="sm" variant="destructive" onClick={() => handleDelete(product.id)}><Trash /></Button>
                                 </CardFooter>
                             </Card>
@@ -156,6 +168,12 @@ const Products = () => {
                 selection="Product"
                 onConfirm={confirmDelete}
                 onCancel={() => setIsDeleteDialogOpen(false)}
+            />
+            <ViewDialog
+                isOpen={selectedProduct > 0}
+                productName={filteredProducts?.find(p => p.id === selectedProduct)?.name ?? ''}
+                history={productHistory}
+                onCancel={() => setSelectedProduct(0)}
             />
         </Card>
     )
