@@ -222,6 +222,23 @@ export const transactionRouter = createTRPCRouter({
       const transaction = await ctx.db.transaction.findMany({
         where: filters,
         orderBy: { id: "asc" },
+        include: {
+          Orders: {
+            include: {
+              Product: {
+                include: {
+                  Category: true,
+                  ProductPriceHistory: {
+                    orderBy: {
+                      createdAt: 'desc',
+                    },
+                    take: 1,
+                  },
+                },
+              },
+            },
+          },
+        },
       });
 
       const totalCount = await ctx.db.transaction.count({ where: filters });
@@ -253,7 +270,6 @@ export const transactionRouter = createTRPCRouter({
   getSalesByProduct: publicProcedure
     .input(
       z.object({
-        productId: z.number(),
         date_range: z
           .object({
             from: z.date().nullable(),
@@ -263,7 +279,7 @@ export const transactionRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const { productId, date_range } = input;
+      const { date_range } = input;
       const filters: any = { is_fully_paid: true };
 
       if (date_range?.from && date_range?.to) {
@@ -272,54 +288,23 @@ export const transactionRouter = createTRPCRouter({
           lte: date_range.to,
         };
       }
-
-      const transactions = await ctx.db.transaction.findMany({
-        where: {
-          ...filters,
-          Orders: {
-            some: {
-              product_id: productId,
-            },
-          },
-        },
+      
+      return await ctx.db.product.findMany({
         include: {
-          Cashier: true,
-          Customer: true,
-          Orders: true,
-        },
-        orderBy: {
-          id: "asc",
-        },
-      });
-
-      const totalCount = await ctx.db.transaction.count({
-        where: {
-          ...filters,
           Orders: {
-            some: {
-              product_id: productId,
-            },
+            where: {
+              Transaction: filters
+            }
           },
-        },
-      });
-
-      const totalcostResult = await ctx.db.transaction.aggregate({
-        where: {
-          ...filters,
-          Orders: {
-            some: {
-              product_id: productId,
+          ProductPriceHistory: {
+            orderBy: {
+              createdAt: 'desc',
             },
+            take: 1,
           },
-        },
-        _sum: { total_cost: true },
-      });
-
-      return {
-        transactions,
-        totalcost: totalcostResult?._sum.total_cost || 0,
-        totalCount,
-      };
+          Category: true
+        }
+      })
     }),
 
   getProducts: publicProcedure.query(async ({ ctx }) => {

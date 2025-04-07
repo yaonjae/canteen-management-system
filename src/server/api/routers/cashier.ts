@@ -60,10 +60,19 @@ export const cashierRouter = createTRPCRouter({
                     }
                 }
             }
+
+            for (const order of orders) {
+                await ctx.db.stockHistory.create({
+                    data: {
+                        product_id: order.productId,
+                        quantity: -order.quantity,
+                    }
+                });
+            }
         }),
 
     getProducts: publicProcedure.query(async ({ ctx }) => {
-        return ctx.db.product.findMany({
+        const products = await ctx.db.product.findMany({
             where: {
                 status: 'AVAILABLE',
             },
@@ -71,14 +80,36 @@ export const cashierRouter = createTRPCRouter({
                 Category: true,
                 ProductPriceHistory: {
                     orderBy: {
-                        createdAt: 'desc'
+                        createdAt: 'desc',
                     },
-                    take: 1
-                }
+                    take: 1,
+                },
+                StockHistory: {
+                    select: {
+                        quantity: true,
+                    },
+                },
             },
             orderBy: {
                 name: 'asc',
-            }
+            },
+        });
+
+        const sortedProducts = products.sort((a, b) => {
+            const sumA = a.StockHistory.reduce((acc, curr) => acc + curr.quantity, 0);
+            const sumB = b.StockHistory.reduce((acc, curr) => acc + curr.quantity, 0);
+            return sumB - sumA; // descending by stock sum
+          });
+
+        return sortedProducts.map(product => {
+            const quantity = product.StockHistory.reduce(
+                (sum, stock) => sum + stock.quantity,
+                0
+            );
+            return {
+                ...product,
+                quantity,
+            };
         });
     }),
 

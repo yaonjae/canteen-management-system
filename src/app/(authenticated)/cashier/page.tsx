@@ -66,7 +66,7 @@ const Cashier = () => {
   const {
     data: products,
     isLoading,
-    refetch,
+    refetch: productRefetch,
   } = api.cashier.getProducts.useQuery();
   const [searchQuery, setSearchQuery] = useState("");
   const [loader, setLoader] = useState(false);
@@ -94,11 +94,15 @@ const Cashier = () => {
   const handleIncreaseQuantity = (productName: string) => {
     setOrderSummary((prev) => {
       const newSummary = new Map(prev);
+      const product = products?.find((prod) => prod.name === productName);
+      const productQuantity = product?.quantity || 0;
       const currentItem = newSummary.get(productName) || { count: 0, price: 0 };
-      newSummary.set(productName, {
-        count: currentItem.count + 1,
-        price: currentItem.price,
-      });
+      if (currentItem.count < productQuantity) {
+        newSummary.set(productName, {
+          count: currentItem.count + 1,
+          price: currentItem.price,
+        });
+      }
       return newSummary;
     });
   };
@@ -106,15 +110,16 @@ const Cashier = () => {
   const handleDecreaseQuantity = (productName: string) => {
     setOrderSummary((prev) => {
       const newSummary = new Map(prev);
+      const product = products?.find((prod) => prod.name === productName);
       const currentItem = newSummary.get(productName) || { count: 0, price: 0 };
 
-      if (currentItem.count === 1) {
-        newSummary.delete(productName);
-      } else {
+      if (currentItem.count > 1) {
         newSummary.set(productName, {
           count: currentItem.count - 1,
           price: currentItem.price,
         });
+      } else {
+        newSummary.delete(productName);
       }
 
       if (newSummary.size === 0) {
@@ -134,6 +139,8 @@ const Cashier = () => {
       orderSummary.clear();
       setPaymentMode("CASH");
       setLoader(false);
+      productRefetch();
+      setCashReceived(0);
     },
     onError: () => {
       toast({
@@ -177,6 +184,7 @@ const Cashier = () => {
 
   const handleProductClick = (productId: string) => {
     const product = products?.find((prod) => prod.id.toString() === productId);
+
     if (product) {
       setOrderSummary((prev) => {
         const newSummary = new Map(prev);
@@ -185,10 +193,12 @@ const Cashier = () => {
           price: Number(product.ProductPriceHistory[0]?.amount || 0),
         };
         const validPrice = isNaN(currentItem.price) ? 0 : currentItem.price;
-        newSummary.set(product.name, {
-          count: currentItem.count + 1,
-          price: validPrice,
-        });
+        if (currentItem.count < product?.quantity) {
+          newSummary.set(product.name, {
+            count: currentItem.count + 1,
+            price: validPrice,
+          });
+        }
         return newSummary;
       });
     }
@@ -232,7 +242,7 @@ const Cashier = () => {
         const product = products?.find((prod) => prod.name === productName);
         return {
           productId: product?.id ?? 0,
-          product_price_id: product?.ProductPriceHistory[0]?.amount ?? 0,
+          product_price_id: product?.ProductPriceHistory[0]?.id ?? 0,
           quantity: count,
           price: price,
           total: count * price,
@@ -348,7 +358,7 @@ const Cashier = () => {
   };
 
   useEffect(() => {
-    refetch();
+    productRefetch();
   }, []);
 
   useEffect(() => {
@@ -358,10 +368,6 @@ const Cashier = () => {
       setChange(0);
     }
   }, [cashReceived, totalAmount]);
-
-  const productPopulate = () => {
-
-  }
 
   return (
     <div className="mx-auto max-w-7xl pt-5">
@@ -416,23 +422,26 @@ const Cashier = () => {
                 <CardLoaderCashier key={index} />
               ))
             ) : filteredProducts && filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="relative size-48 rounded-lg shadow transition-transform duration-200 ease-in-out hover:scale-105"
-                  onClick={() => handleProductClick(product.id.toString())}
-                >
-                  <img
-                    src={product.image_url}
-                    alt=""
-                    className="h-full w-full rounded-lg object-cover"
-                  />
-                  <p className="absolute bottom-0 left-0 flex w-full items-center justify-between rounded-b-lg bg-gradient-to-b from-transparent to-blue-950 p-3 pt-14 text-sm text-white">
-                    <span>{product.name}</span>
-                    <span>{formatCurrency(product.ProductPriceHistory[0]?.amount || 0)}</span>
-                  </p>
-                </div>
-              ))
+              filteredProducts.map((product) => {
+                const isOutOfStock = product.quantity === 0;
+                return (
+                  <div
+                    key={product.id}
+                    className={`relative size-48 rounded-lg shadow transition-transform duration-200 ease-in-out hover:scale-105 ${isOutOfStock ? "grayscale pointer-events-none" : ""}`}
+                    onClick={() => !isOutOfStock && handleProductClick(product.id.toString())}
+                  >
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className={`h-full w-full rounded-lg object-cover ${isOutOfStock ? "grayscale" : ""}`}
+                    />
+                    <p className="absolute bottom-0 left-0 flex w-full items-center justify-between rounded-b-lg bg-gradient-to-b from-transparent to-blue-950 p-3 pt-14 text-sm text-white">
+                      <span>{product.name}</span>
+                      <span>{formatCurrency(product.ProductPriceHistory[0]?.amount || 0)} x {product.quantity}</span>
+                    </p>
+                  </div>
+                );
+              })
             ) : (
               <p className="w-full py-10 text-center text-gray-500">
                 No products available
@@ -498,59 +507,61 @@ const Cashier = () => {
                       <Label htmlFor="credit">CREDIT</Label>
                     </div>
                   </RadioGroup>
-                  {/* <div className="flex items-center justify-start gap-2">
-                    <Label className="w-56">Customer:</Label>
-                    <Popover open={open} onOpenChange={setOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={open}
-                          className="w-full justify-between"
-                        >
-                          {value
-                            ? `${customers?.find((customer) => customer.id === value)?.id} | ${customers?.find((customer) => customer.id === value)?.last_name}, ${customers?.find((customer) => customer.id === value)?.first_name}`
-                            : "Select Customer"}
-                          <ChevronsUpDown className="opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[200px] p-0">
-                        <Command>
-                          <CommandInput placeholder="Search ID" />
-                          <CommandList>
-                            <CommandEmpty>No framework found.</CommandEmpty>
-                            <CommandGroup>
-                              {customers?.map((customer) => (
-                                <CommandItem
-                                  key={customer.id}
-                                  value={customer.id}
-                                  onSelect={(currentValue) => {
-                                    setValue(
-                                      currentValue === value
-                                        ? ""
-                                        : currentValue,
-                                    );
-                                    setOpen(false);
-                                  }}
-                                >
-                                  {customer.id} | {customer.last_name},{" "}
-                                  {customer.first_name}
-                                  <Check
-                                    className={cn(
-                                      "ml-auto",
-                                      value === customer.id
-                                        ? "opacity-100"
-                                        : "opacity-0",
-                                    )}
-                                  />
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </div> */}
+                  {paymentMode === "CREDIT" && (
+                    <div className="flex items-center justify-start gap-2">
+                      <Label className="w-56">Customer:</Label>
+                      <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={open}
+                            className="w-full justify-between"
+                          >
+                            {value
+                              ? `${customers?.find((customer) => customer.id === value)?.id} | ${customers?.find((customer) => customer.id === value)?.last_name}, ${customers?.find((customer) => customer.id === value)?.first_name}`
+                              : "Select Customer"}
+                            <ChevronsUpDown className="opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[200px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search ID" />
+                            <CommandList>
+                              <CommandEmpty>No framework found.</CommandEmpty>
+                              <CommandGroup>
+                                {customers?.map((customer) => (
+                                  <CommandItem
+                                    key={customer.id}
+                                    value={customer.id}
+                                    onSelect={(currentValue) => {
+                                      setValue(
+                                        currentValue === value
+                                          ? ""
+                                          : currentValue,
+                                      );
+                                      setOpen(false);
+                                    }}
+                                  >
+                                    {customer.id} | {customer.last_name},{" "}
+                                    {customer.first_name}
+                                    <Check
+                                      className={cn(
+                                        "ml-auto",
+                                        value === customer.id
+                                          ? "opacity-100"
+                                          : "opacity-0",
+                                      )}
+                                    />
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  )}
                   {paymentMode === "CASH" && (
                     <>
                       <div className="flex items-center justify-start gap-2">
