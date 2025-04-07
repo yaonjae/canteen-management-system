@@ -95,22 +95,17 @@ export const cashierRouter = createTRPCRouter({
             },
         });
 
-        const sortedProducts = products.sort((a, b) => {
-            const sumA = a.StockHistory.reduce((acc, curr) => acc + curr.quantity, 0);
-            const sumB = b.StockHistory.reduce((acc, curr) => acc + curr.quantity, 0);
-            return sumB - sumA; // descending by stock sum
-          });
+        const filteredProducts = products
+            .map(product => {
+                const quantity = product.StockHistory.reduce(
+                    (sum, stock) => sum + stock.quantity,
+                    0
+                );
+                return { ...product, quantity };
+            })
+            .filter(product => product.quantity > 0);
 
-        return sortedProducts.map(product => {
-            const quantity = product.StockHistory.reduce(
-                (sum, stock) => sum + stock.quantity,
-                0
-            );
-            return {
-                ...product,
-                quantity,
-            };
-        });
+        return filteredProducts;
     }),
 
     getCustomer: publicProcedure.query(async ({ ctx }) => {

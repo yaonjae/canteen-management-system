@@ -214,25 +214,31 @@ const Cashier = () => {
     await onSubmit(printReceipt);
   };
 
+  const handleCheckout = () => {
+    if (Number(cashReceived) >= totalAmount) {
+      if (orderSummary.size > 0) {
+        setDialogOpen(true);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "No items in the order summary.",
+        });
+      }
+    } else {
+      toast({
+        variant: "destructive",
+        title:
+          "Failed to order product. Cash received is insufficient. Please try again.",
+      });
+    }
+  }
+
   const onSubmit = async (printReceipt: boolean) => {
     if (paymentMode === "CREDIT" && !value) {
       toast({
         variant: "destructive",
         title:
           "Failed to order product. The Customer field is required if the payment mode is Credit. Please try again.",
-      });
-      return;
-    }
-
-    if (
-      paymentMode === "CASH" &&
-      (typeof cashReceived === "string" ? Number(cashReceived) : cashReceived) <
-      totalAmount
-    ) {
-      toast({
-        variant: "destructive",
-        title:
-          "Failed to order product. Cash received is insufficient. Please try again.",
       });
       return;
     }
@@ -589,16 +595,7 @@ const Cashier = () => {
                     Cancel
                   </Button>
                   <Button
-                    onClick={() => {
-                      if (orderSummary.size > 0) {
-                        setDialogOpen(true);
-                      } else {
-                        toast({
-                          variant: "destructive",
-                          title: "No items in the order summary.",
-                        });
-                      }
-                    }}
+                    onClick={() => handleCheckout()}
                   >
                     {loader ? (
                       <>
