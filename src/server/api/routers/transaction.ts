@@ -212,11 +212,16 @@ export const transactionRouter = createTRPCRouter({
       const { date_range } = input;
       const filters: any = { is_fully_paid: true };
 
-      if (date_range?.from && date_range?.to) {
-        filters.createdAt = {
-          gte: date_range.from,
-          lte: date_range.to,
-        };
+      if (date_range?.from || date_range?.to) {
+        filters.createdAt = {};
+      
+        if (date_range.from) {
+          filters.createdAt.gte = date_range.from;
+        }
+      
+        if (date_range.to) {
+          filters.createdAt.lte = date_range.to;
+        }
       }
 
       const transaction = await ctx.db.transaction.findMany({
@@ -228,14 +233,9 @@ export const transactionRouter = createTRPCRouter({
               Product: {
                 include: {
                   Category: true,
-                  ProductPriceHistory: {
-                    orderBy: {
-                      createdAt: 'desc',
-                    },
-                    take: 1,
-                  },
                 },
               },
+              ProductPrice: true,
             },
           },
         },
@@ -282,11 +282,16 @@ export const transactionRouter = createTRPCRouter({
       const { date_range } = input;
       const filters: any = { is_fully_paid: true };
 
-      if (date_range?.from && date_range?.to) {
-        filters.createdAt = {
-          gte: date_range.from,
-          lte: date_range.to,
-        };
+      if (date_range?.from || date_range?.to) {
+        filters.createdAt = {};
+      
+        if (date_range.from) {
+          filters.createdAt.gte = date_range.from;
+        }
+      
+        if (date_range.to) {
+          filters.createdAt.lte = date_range.to;
+        }
       }
       
       return await ctx.db.product.findMany({
@@ -294,13 +299,10 @@ export const transactionRouter = createTRPCRouter({
           Orders: {
             where: {
               Transaction: filters
-            }
-          },
-          ProductPriceHistory: {
-            orderBy: {
-              createdAt: 'desc',
             },
-            take: 1,
+            include: {
+              ProductPrice: true
+            }
           },
           Category: true
         }

@@ -97,7 +97,7 @@ const Sales = () => {
                     sale.Orders.reduce((orderTotal, order) => {
                         return (
                             orderTotal +
-                            (order.Product.ProductPriceHistory[0]?.amount || 0) * order.quantity
+                            (order.ProductPrice?.amount || 0) * order.quantity
                         );
                     }, 0)
                 );
@@ -110,7 +110,7 @@ const Sales = () => {
         if (!productSalesData) return;
 
         const total = productSalesData.reduce((sum, sale) => {
-            const price = sale.ProductPriceHistory[0]?.amount || 0;
+            const price = sale.Orders.reduce((c, a) => c + a.ProductPrice.amount, 0) || 0;
             const subtotal = sale.Orders.reduce((c, a) => (a.quantity * price) + c, 0);
             return sum + subtotal;
         }, 0);
@@ -192,7 +192,7 @@ const Sales = () => {
                                             <>
                                                 {sales.map((sale) => {
                                                     return sale.Orders.map((order) => {
-                                                        const itemTotal = (order.Product.ProductPriceHistory[0]?.amount || 0) * order.quantity;
+                                                        const itemTotal = (order.ProductPrice?.amount || 0) * order.quantity;
 
                                                         return (
                                                             <TableRow key={order.id}>
@@ -203,7 +203,7 @@ const Sales = () => {
                                                                     {order.Product.Category.name}
                                                                 </TableCell>
                                                                 <TableCell className="w-1/4">
-                                                                    {formatCurrency(order.Product.ProductPriceHistory[0]?.amount || 0)}
+                                                                    {formatCurrency(order.ProductPrice.amount || 0)}
                                                                 </TableCell>
                                                                 <TableCell className="w-1/4">
                                                                     {order.quantity}
@@ -231,7 +231,7 @@ const Sales = () => {
                                                 sale.Orders.reduce((orderTotal, order) => {
                                                     return (
                                                         orderTotal +
-                                                        (order.Product.ProductPriceHistory[0]?.amount || 0) * order.quantity
+                                                        (order.ProductPrice.amount || 0) * order.quantity
                                                     );
                                                 }, 0)
                                             );
@@ -295,7 +295,7 @@ const Sales = () => {
                                         ) : (
                                             <>
                                                 {productSalesData?.map((sale) => {
-                                                    const price = sale.ProductPriceHistory[0]?.amount || 0
+                                                    const price = sale.Orders.reduce((c, a) => c + a.ProductPrice.amount, 0) || 0
                                                     const subTotal = price * sale.Orders.reduce((c, a) => (a.quantity * price) + c, 0)
                                                     return <TableRow key={sale.id}>
                                                         <TableCell className="w-1/4">
