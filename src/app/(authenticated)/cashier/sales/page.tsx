@@ -30,6 +30,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 
+const groupedOrders = new Map<string, {
+    category: string;
+    price: number;
+    quantity: number;
+    totalSales: number;
+}>();
+
 const Sales = () => {
     const router = useRouter();
     const { user } = useStore();
@@ -71,6 +78,29 @@ const Sales = () => {
             : undefined,
     });
 
+    sales.forEach((sale) => {
+        sale.Orders.forEach((order) => {
+            const productName = order.Product.name;
+            const category = order.Product.Category.name;
+            const price = order.ProductPrice.amount || 0;
+            const quantity = order.quantity;
+            const totalSales = price * quantity;
+
+            if (groupedOrders.has(productName)) {
+                const existing = groupedOrders.get(productName)!;
+                existing.quantity += quantity;
+                existing.totalSales += totalSales;
+            } else {
+                groupedOrders.set(productName, {
+                    category,
+                    price,
+                    quantity,
+                    totalSales,
+                });
+            }
+        });
+    });
+
     const formattedDateRange = dateRange
         ? `${dateRange.from ? format(dateRange.from, "MMM dd, yyyy") : ""} - ${dateRange.to ? format(dateRange.to, "MMM dd, yyyy") : ""}`
         : "All";
@@ -90,20 +120,11 @@ const Sales = () => {
     });
 
     useEffect(() => {
-        if (sales.length > 0) {
-            const calculatedTotal = sales.reduce((total, sale) => {
-                return (
-                    total +
-                    sale.Orders.reduce((orderTotal, order) => {
-                        return (
-                            orderTotal +
-                            (order.ProductPrice?.amount || 0) * order.quantity
-                        );
-                    }, 0)
-                );
-            }, 0);
-            setTotalSales(calculatedTotal);
-        }
+        let total = 0;
+        groupedOrders.forEach((order) => {
+            total += order.totalSales;
+        });
+        setTotalSales(total);
     }, [sales]);
 
     useEffect(() => {
@@ -155,7 +176,7 @@ const Sales = () => {
                                 </div>
                                 <Button onClick={() => handlePrint()}>Print</Button>
                             </div>
-                            <div className="max-h-96 overflow-y-auto" ref={tableRef}>
+                            <div className="max-h-[500px] overflow-y-auto" ref={tableRef}>
                                 <div className="print-block hidden">
                                     <div className="flex justify-between">
                                         <div>
@@ -182,40 +203,22 @@ const Sales = () => {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {sales.length === 0 ? (
+                                        {groupedOrders.size === 0 ? (
                                             <TableRow>
                                                 <TableCell colSpan={5} className="text-center">
                                                     No sales available
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
-                                            <>
-                                                {sales.map((sale) => {
-                                                    return sale.Orders.map((order) => {
-                                                        const itemTotal = (order.ProductPrice?.amount || 0) * order.quantity;
-
-                                                        return (
-                                                            <TableRow key={order.id}>
-                                                                <TableCell className="w-1/4">
-                                                                    {order.Product.name}
-                                                                </TableCell>
-                                                                <TableCell className="w-1/4">
-                                                                    {order.Product.Category.name}
-                                                                </TableCell>
-                                                                <TableCell className="w-1/4">
-                                                                    {formatCurrency(order.ProductPrice.amount || 0)}
-                                                                </TableCell>
-                                                                <TableCell className="w-1/4">
-                                                                    {order.quantity}
-                                                                </TableCell>
-                                                                <TableCell className="w-1/4">
-                                                                    {formatCurrency(itemTotal)}
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        );
-                                                    });
-                                                })}
-                                            </>
+                                            Array.from(groupedOrders.entries()).map(([productName, data]) => (
+                                                <TableRow key={productName}>
+                                                    <TableCell className="w-1/4">{productName}</TableCell>
+                                                    <TableCell className="w-1/4">{data.category}</TableCell>
+                                                    <TableCell className="w-1/4">{formatCurrency(data.price)}</TableCell>
+                                                    <TableCell className="w-1/4">{data.quantity}</TableCell>
+                                                    <TableCell className="w-1/4">{formatCurrency(data.totalSales)}</TableCell>
+                                                </TableRow>
+                                            ))
                                         )}
                                     </TableBody>
                                 </Table>
@@ -223,20 +226,7 @@ const Sales = () => {
                             <div className="">
                                 <p className="text-end">
                                     <strong>Total:  </strong>
-                                    {formatCurrency(
-                                        sales.reduce((total, sale) => {
-                                            // Calculate the total for each sale
-                                            return (
-                                                total +
-                                                sale.Orders.reduce((orderTotal, order) => {
-                                                    return (
-                                                        orderTotal +
-                                                        (order.ProductPrice.amount || 0) * order.quantity
-                                                    );
-                                                }, 0)
-                                            );
-                                        }, 0)
-                                    )}
+                                    {formatCurrency(totalSales)}
                                 </p>
                             </div>
                         </CardContent>
@@ -262,7 +252,7 @@ const Sales = () => {
                                 </div>
                                 <Button onClick={() => handlePrintProduct()}>Print</Button>
                             </div>
-                            <div className="max-h-96 overflow-y-auto" ref={tableRefProduct}>
+                            <div className="max-h-[500px] overflow-y-auto" ref={tableRefProduct}>
                                 <div className="print-block hidden">
                                     <div className="flex justify-between">
                                         <div>

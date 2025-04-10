@@ -378,11 +378,16 @@ const Cashier = () => {
   return (
     <div className="mx-auto max-w-7xl pt-5">
       <div className="flex items-center justify-between">
-        <p className="font-bold uppercase">{user?.username}</p>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push('/cashier/sales')}>
+        <div className="flex gap-1 items-center">
+          <Button variant="outline" onClick={() => router.push('/cashier/sales')} className="w-24">
             Sales
           </Button>
+          <Button variant="outline" onClick={() => router.push('/cashier/customer')} className="w-24">
+            Credits
+          </Button>
+        </div>
+        <div className="flex gap-4 items-center">
+          <p className="font-bold uppercase">{user?.username}</p>
           <Button onClick={logout}>
             <LogOut />
             Logout

@@ -88,16 +88,35 @@ export const customerRouter = createTRPCRouter({
             id: z.string(),
             page: z.number().min(1).default(1),
             itemsPerPage: z.number().min(1).default(10),
+            date_range: z
+                .object({
+                    from: z.date().nullable(),
+                    to: z.date().nullable(),
+                })
+                .optional(),
         }))
         .query(async ({ ctx, input }) => {
-            const { id, page, itemsPerPage } = input;
+            const { id, page, itemsPerPage, date_range } = input;
             const skip = (page - 1) * itemsPerPage;
+            const filters: any = {
+                customer_id: id,
+                is_fully_paid: false
+            };
+
+            if (date_range?.from || date_range?.to) {
+                filters.createdAt = {};
+
+                if (date_range.from) {
+                    filters.createdAt.gte = date_range.from;
+                }
+
+                if (date_range.to) {
+                    filters.createdAt.lte = date_range.to;
+                }
+            }
 
             const orders = await ctx.db.transaction.findMany({
-                where: {
-                    customer_id: id,
-                    is_fully_paid: false,
-                },
+                where: filters,
                 include: {
                     Orders: {
                         include: {
@@ -114,19 +133,15 @@ export const customerRouter = createTRPCRouter({
                 skip,
                 take: itemsPerPage,
             });
-            
+
 
             const totalOrders = await ctx.db.transaction.count({
-                where: {
-                    customer_id: id,
-                    is_fully_paid: false,
-                },
+                where: filters,
             });
 
             const total_cost = await ctx.db.transaction.aggregate({
                 where: {
-                    customer_id: id,
-                    is_fully_paid: false,
+                    ...filters,
                     transaction_type: 'CREDIT',
                 },
                 _sum: {
@@ -135,7 +150,7 @@ export const customerRouter = createTRPCRouter({
                 },
             });
 
-            const total = (total_cost?._sum.total_cost || 0) - (total_cost?._sum.total_paid || 0);
+            const total = (total_cost._sum?.total_cost ?? 0) - (total_cost._sum?.total_paid ?? 0);
 
             return {
                 orders,
@@ -149,16 +164,35 @@ export const customerRouter = createTRPCRouter({
             id: z.string(),
             page: z.number().min(1).default(1),
             itemsPerPage: z.number().min(1).default(10),
+            date_range: z
+                .object({
+                    from: z.date().nullable(),
+                    to: z.date().nullable(),
+                })
+                .optional(),
         }))
         .query(async ({ ctx, input }) => {
-            const { id, page, itemsPerPage } = input;
+            const { id, page, itemsPerPage, date_range } = input;
             const skip = (page - 1) * itemsPerPage;
+            const filters: any = {
+                customer_id: id,
+                is_fully_paid: true
+            };
+
+            if (date_range?.from || date_range?.to) {
+                filters.createdAt = {};
+
+                if (date_range.from) {
+                    filters.createdAt.gte = date_range.from;
+                }
+
+                if (date_range.to) {
+                    filters.createdAt.lte = date_range.to;
+                }
+            }
 
             const history = await ctx.db.transaction.findMany({
-                where: {
-                    customer_id: id,
-                    is_fully_paid: true,
-                },
+                where: filters,
                 orderBy: {
                     createdAt: 'desc',
                 },
@@ -167,10 +201,7 @@ export const customerRouter = createTRPCRouter({
             });
 
             const totalHistory = await ctx.db.transaction.count({
-                where: {
-                    customer_id: id,
-                    is_fully_paid: true,
-                },
+                where: filters
             });
 
             return {

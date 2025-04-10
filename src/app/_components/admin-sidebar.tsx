@@ -21,12 +21,13 @@ import { useRouter } from "next/navigation"
 const items: SidebarItem[] = [
     { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
     { title: "Products", url: "/admin/products", icon: Package },
+    { title: "Price Maintenance", url: "/admin/products-price", icon: Package },
     { title: "Category", url: "/admin/category", icon: ListCollapse },
     { title: "Stocks", url: "/admin/stock", icon: ChartNoAxesColumnIncreasing },
     { title: "Transaction", url: "/admin/transactions", icon: ArrowLeftRight },
     { title: "Sales", url: "/admin/sales", icon: ChartNoAxesCombined },
     { title: "Employee", url: "/admin/employees", icon: CircleUser },
-    { title: "Staff and Faculty", url: "/admin/customer", icon: Users },
+    // { title: "Staff and Faculty", url: "/admin/customer", icon: Users },
 ];
 
 export function AdminSidebar() {

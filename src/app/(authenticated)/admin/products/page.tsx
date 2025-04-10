@@ -147,7 +147,7 @@ const Products = () => {
                                 </CardContent>
                                 <CardFooter className="space-x-2">
                                     <Button size="sm" variant="outline" onClick={() => handleEdit(product.id)}><Pencil /></Button>
-                                    <Button size="sm" variant="outline" onClick={() => handleViewHistory(product.id)}><TableOfContents /></Button>
+                                    {/* <Button size="sm" variant="outline" onClick={() => handleViewHistory(product.id)}><TableOfContents /></Button> */}
                                     <Button size="sm" variant="destructive" onClick={() => handleDelete(product.id)}><Trash /></Button>
                                 </CardFooter>
                             </Card>

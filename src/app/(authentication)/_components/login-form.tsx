@@ -28,7 +28,7 @@ import { LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  role: z.string(),
+  // role: z.string(),
   username: z.string().min(5, { message: "Username must be at least 5 characters" }),
   password: z.string().min(5, { message: "Password must be at least 5 characters" }),
 });
@@ -38,7 +38,7 @@ export default function LoginForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      role: "cashier",
+      // role: "cashier",
       username: "",
       password: ""
     }
@@ -71,9 +71,9 @@ export default function LoginForm() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="px-10 space-y-3 flex flex-col"
+        className="px-10 space-y-5 flex flex-col"
       >
-        <FormField
+        {/* <FormField
           control={form.control}
           name="role"
           render={({ field }) => (
@@ -94,7 +94,7 @@ export default function LoginForm() {
               <FormMessage />
             </FormItem>
           )}
-        />
+        /> */}
 
         <FormField
           control={form.control}
