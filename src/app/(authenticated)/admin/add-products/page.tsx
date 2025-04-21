@@ -67,17 +67,17 @@ export default function AddItem() {
 
     const createProduct = api.product.create.useMutation({
         onSuccess: () => {
-            toast({
-                title: "Product created successfully!",
-                description: getFormattedDate(),
-            });
-            router.push('/admin/products');
+          toast({
+            title: "Product created successfully!",
+            description: getFormattedDate(),
+          });
+          router.push('/admin/products');
         },
-        onError: () => {
-            toast({
-                variant: "destructive",
-                title: "Failed to create product. Please try again.",
-                description: getFormattedDate(),
+        onError: (error) => {
+          toast({
+            variant: "destructive",
+            title: error.message,
+            description: getFormattedDate(),
             })
         },
     });

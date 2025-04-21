@@ -15,12 +15,22 @@ export const productRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { name, amount, image, category } = input;
 
+      const existingProduct = await ctx.db.product.findFirst({
+        where: {
+          name: name,
+        },
+      });
+  
+      if (existingProduct) {
+        throw new Error("A product with this name already exists.");
+      }
+
       const newProduct = await ctx.db.product.create({
         data: {
           name,
           image_url: image,
           category_id: category,
-          status: "AVAILABLE",
+          status: "NOT_AVAILABLE",
           ProductPriceHistory: {
             create: {
               amount,

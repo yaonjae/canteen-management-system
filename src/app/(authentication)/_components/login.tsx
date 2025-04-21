@@ -2,16 +2,16 @@ import React from 'react'
 import Image from 'next/image'
 import LoginForm from './login-form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import loginImage from '@/app/images/cpms.jpg'
+import loginImage from '@/app/images/logoimg.png'
 
 const Login = () => {
     return (
-        <div className='h-screen flex justify-center items-center'>
+        <div className='h-screen flex justify-center items-center'> 
             <div className='w-[900px] relative m-12'>
                 <Card className='z-0 h-[400px] shadow-lg'>
-                    <CardContent className='p-0 grid grid-cols-1 md:grid-cols-2 items-center content-center h-full'>
+                    <CardContent className='p-0 grid grid-cols-1 md:grid-cols-2 items-center content-center h-full relative overflow-hidden'>
                         <LoginForm />
-                        <Image src={loginImage} alt="Login" className='md:block hidden object-cover' />
+                        <Image src={loginImage} alt="Login" className='absolute h-[400px] w-[450px] top-0 right-0 rounded-lg' />
                     </CardContent>
                 </Card>
                 <div className='rounded-full bg-[#2762eb] size-14 absolute -top-7 -left-7 z-[-1] shadow-lg'></div>
