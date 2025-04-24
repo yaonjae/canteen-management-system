@@ -113,7 +113,7 @@ export const productRouter = createTRPCRouter({
         id: z.number().int(),
         name: z.string().min(1),
         amount: z.number().positive(),
-        image: z.string().url(),
+        image: z.string().url().optional().or(z.literal("")),
         category: z.number().int().positive(),
       }),
     )

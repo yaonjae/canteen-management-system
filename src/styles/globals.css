@@ -184,7 +184,19 @@
   }
   .print-block {
     display: block !important;
-    margin-bottom: 20mm; /* Adjust as needed */
+  }
+
+  .max-h-\[500px\] {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Or apply a general rule to any element you use for the scroll container */
+  .no-scroll-print,
+  [ref="tableRef"],
+  [ref="tableRefProduct"] {
+    max-height: none !important;
+    overflow: visible !important;
   }
 }
 
