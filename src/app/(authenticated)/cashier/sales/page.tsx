@@ -352,29 +352,24 @@ const Sales = () => {
                       <>
                         {productSalesData
                           ?.filter((sale) => {
-                            const price =
-                              sale.Orders.reduce(
-                                (c, a) => c + a.ProductPrice.amount,
-                                0,
-                              ) || 0;
                             const subTotal = sale.Orders.reduce(
-                              (c, a) => a.quantity * price + c,
+                              (c, a) => c + a.quantity * a.ProductPrice.amount,
                               0,
                             );
                             return subTotal > 0;
                           })
                           .map((sale) => {
                             const price =
-                              sale.Orders.reduce(
-                                (c, a) => c + a.ProductPrice.amount,
-                                0,
-                              ) || 0;
-                            const subTotal =
-                              price *
-                              sale.Orders.reduce(
-                                (c, a) => a.quantity * price + c,
-                                0,
-                              );
+                              sale.Orders[0]?.ProductPrice.amount || 0;
+                            const quantity = sale.Orders.reduce(
+                              (c, a) => c + a.quantity,
+                              0,
+                            );
+                            const subTotal = sale.Orders.reduce(
+                              (c, a) => c + a.quantity * a.ProductPrice.amount,
+                              0,
+                            );
+
                             return (
                               <TableRow key={sale.id}>
                                 <TableCell className="w-1/4">
@@ -387,10 +382,7 @@ const Sales = () => {
                                   {formatCurrency(price)}
                                 </TableCell>
                                 <TableCell className="w-1/4">
-                                  {sale.Orders.reduce(
-                                    (c, a) => a.quantity + c,
-                                    0,
-                                  )}
+                                  {quantity}
                                 </TableCell>
                                 <TableCell className="w-1/4">
                                   {formatCurrency(subTotal)}
