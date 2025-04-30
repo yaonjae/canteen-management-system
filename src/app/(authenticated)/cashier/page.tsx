@@ -215,7 +215,7 @@ const Cashier = () => {
   };
 
   const handleCheckout = () => {
-    if (Number(cashReceived) >= totalAmount) {
+    if (Number(cashReceived) >= totalAmount || paymentMode == 'CREDIT') {
       if (orderSummary.size > 0) {
         setDialogOpen(true);
       } else {

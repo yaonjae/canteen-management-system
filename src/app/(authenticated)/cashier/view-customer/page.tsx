@@ -10,7 +10,6 @@ import { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
 import { endOfDay } from 'date-fns'
 import formatDate, { formatCurrency, getFormattedDate, getFormattedDateDay, getFormattedTime } from '@/lib/utils'
-import { Input } from "@/components/ui/input"
 import {
     Tabs,
     TabsContent,
@@ -249,7 +248,7 @@ const ViewCustomer = () => {
             if (orders?.orders) {
                 orders.orders.forEach((order) => {
                     order.Orders.forEach((item) => {
-                        orderDetails += `${item.Product.name.toUpperCase()} (${item.quantity}) : PHP ${item.ProductPrice.amount !== null ? item.ProductPrice.amount.toFixed(2) : 0} = PHP ${((item.ProductPrice.amount !== null ? item.ProductPrice.amount : 0) * item.quantity).toFixed(2)}\n`;
+                        orderDetails += `${item.Product.name.toUpperCase()} (${item.quantity}) : PHP ${((item.ProductPrice.amount !== null ? item.ProductPrice.amount : 0) * item.quantity).toFixed(2)}\n`;
                         totalCost += (item.ProductPrice.amount !== null ? item.ProductPrice.amount : 0) * item.quantity;
                     });
                 });

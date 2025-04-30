@@ -31,6 +31,7 @@ import { useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 import reportLogo from "@/app/images/reportlogo.png";
 import Image from "next/image";
+import { Input } from "@/components/ui/input";
 
 const groupedOrders = new Map<
   string,
@@ -55,6 +56,8 @@ const Sales = () => {
   const [productSales, setProductSales] = useState<any[]>([]);
   const tableRef = useRef<HTMLDivElement | null>(null);
   const tableRefProduct = useRef<HTMLDivElement | null>(null);
+  const [preparedByOverall, setPreparedByOverall] = useState("");
+  const [preparedByProduct, setPreparedByProduct] = useState("");
 
   const {
     data: products,
@@ -66,9 +69,9 @@ const Sales = () => {
     {
       date_range: dateRangeProduct
         ? {
-            from: dateRangeProduct.from ?? null,
-            to: dateRangeProduct.to ?? null,
-          }
+          from: dateRangeProduct.from ?? null,
+          to: dateRangeProduct.to ?? null,
+        }
         : undefined,
     },
   );
@@ -184,7 +187,16 @@ const Sales = () => {
                     }
                   />
                 </div>
-                <Button onClick={() => handlePrint()}>Print</Button>
+                <div className="flex gap-2 justify-center items-center">
+                  <Input
+                    placeholder="Prepared By..."
+                    value={preparedByOverall}
+                    onChange={(e) => setPreparedByOverall(e.target.value)}
+                  />
+                  <Button onClick={() => handlePrint()} disabled={!preparedByOverall.trim()}>
+                    Print
+                  </Button>
+                </div>
               </div>
               <div
                 className="no-scroll-print max-h-[500px] overflow-y-auto"
@@ -262,9 +274,9 @@ const Sales = () => {
                 </Table>
                 <div className="print-block hidden">
                   <div className="mt-10 flex w-52 flex-col">
-                    <p>Presented By:</p>
+                    <p>Prepared By:</p>
                     <br />
-                    <p className="w-full text-center">Irene G. Maglajos</p>
+                    <p className="w-full text-center uppercase font-bold">{preparedByOverall || ""}</p>
                     <hr className="border-black" />
                     <p className="w-full text-center">The administrator</p>
                   </div>
@@ -297,7 +309,16 @@ const Sales = () => {
                     }
                   />
                 </div>
-                <Button onClick={() => handlePrintProduct()}>Print</Button>
+                <div className="flex gap-2 justify-center items-center">
+                  <Input
+                    placeholder="Prepared By..."
+                    value={preparedByProduct}
+                    onChange={(e) => setPreparedByProduct(e.target.value)}
+                  />
+                  <Button onClick={() => handlePrintProduct()} disabled={!preparedByProduct.trim()}>
+                    Print
+                  </Button>
+                </div>
               </div>
               <div
                 className="no-scroll-print max-h-[500px] overflow-y-auto"
@@ -396,9 +417,9 @@ const Sales = () => {
                 </Table>
                 <div className="print-block hidden">
                   <div className="mt-10 flex w-52 flex-col">
-                    <p>Presented By:</p>
+                    <p>Prepared By:</p>
                     <br />
-                    <p className="w-full text-center">Irene G. Maglajos</p>
+                    <p className="w-full text-center uppercase font-bold">{preparedByProduct || ""}</p>
                     <hr className="border-black" />
                     <p className="w-full text-center">The administrator</p>
                   </div>

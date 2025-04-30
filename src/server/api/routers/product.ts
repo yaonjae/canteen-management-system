@@ -20,7 +20,7 @@ export const productRouter = createTRPCRouter({
           name: name,
         },
       });
-  
+
       if (existingProduct) {
         throw new Error("A product with this name already exists.");
       }
@@ -137,6 +137,22 @@ export const productRouter = createTRPCRouter({
   delete: publicProcedure
     .input(z.object({ id: z.number().int() }))
     .mutation(async ({ ctx, input }) => {
+      const product = await ctx.db.product.findUnique({
+        where: { id: input.id },
+      });
+
+      if (!product) throw new Error("Product not found");
+
+      await ctx.db.archivedProduct.create({
+        data: {
+          original_product_id: product.id,
+          name: product.name,
+          image_url: product.image_url,
+          category_id: product.category_id,
+          status: product.status,
+        },
+      });
+
       await ctx.db.productPriceHistory.deleteMany({
         where: { product_id: input.id },
       });
@@ -149,6 +165,7 @@ export const productRouter = createTRPCRouter({
         where: { id: input.id },
       });
     }),
+
 
   updateStatus: publicProcedure
     .input(

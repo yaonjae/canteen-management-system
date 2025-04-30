@@ -68,6 +68,16 @@ model Product {
     StockHistory StockHistory[]
 }
 
+model ArchivedProduct {
+  id                  Int       @id @default(autoincrement())
+  original_product_id Int
+  name                String?
+  image_url           String?
+  category_id         Int?
+  status              product_status?
+  archivedAt          DateTime  @default(now())
+}
+
 model ProductPriceHistory {
     id         Int      @id @default(autoincrement())
     product_id Int
