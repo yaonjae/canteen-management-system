@@ -93,6 +93,39 @@ export const productRouter = createTRPCRouter({
       return { products: latestData, totalProducts };
     }),
 
+  getArchivedProducts: publicProcedure
+    .input(z.object({ page: z.number().min(1), pageSize: z.number().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const { page, pageSize } = input;
+      const [products, totalProducts, categories] = await ctx.db.$transaction([
+        ctx.db.archivedProduct.findMany({
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          select: {
+            id: true,
+            name: true,
+            image_url: true,
+            category_id: true,
+            status: true,
+          },
+        }),
+        ctx.db.archivedProduct.count(),
+        ctx.db.category.findMany({
+          select: {
+            id: true,
+            name: true,
+          },
+        }),
+      ]);
+
+      const productsWithCategories = products.map(product => ({
+        ...product,
+        categoryName: categories.find(cat => cat.id === product.category_id)?.name || 'Unknown',
+      }));
+
+      return { products: productsWithCategories, totalProducts };
+    }),
+
   getProductsHistory: publicProcedure
     .input(z.object({ product_id: z.number() }))
     .query(async ({ ctx, input }) => {
