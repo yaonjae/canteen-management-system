@@ -199,6 +199,34 @@ export const productRouter = createTRPCRouter({
       });
     }),
 
+  restore: publicProcedure
+    .input(z.object({ id: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const product = await ctx.db.archivedProduct.findUnique({
+        where: { id: input.id },
+      });
+
+      if (!product) throw new Error("Product not found");
+
+      await ctx.db.product.create({
+        data: {
+          name: product.name ?? '',
+          image_url: product.image_url ?? '',
+          category_id: product.category_id ?? 0,
+          status: "NOT_AVAILABLE",
+          ProductPriceHistory: {
+            create: {
+              amount: 0,
+            },
+          },
+        },
+      });
+
+      await ctx.db.archivedProduct.deleteMany({
+        where: { id: input.id },
+      });
+    }),
+
 
   updateStatus: publicProcedure
     .input(

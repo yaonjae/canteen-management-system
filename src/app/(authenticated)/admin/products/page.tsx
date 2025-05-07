@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Pencil, TableOfContents, Trash } from 'lucide-react';
+import { Pencil, TableOfContents, Trash, Undo2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/trpc/react';
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getFormattedDate } from '@/lib/utils';
 import CardLoader from '@/app/_components/card-loader';
 import DeleteDialog from '@/app/_components/delete-dialog';
+import RestoreDialog from '@/app/_components/restore-dialog';
 import PaginationComponent from '@/app/_components/pagination';
 import ViewDialog from '@/app/_components/view-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,15 +20,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const Products = () => {
     const router = useRouter();
     const [currentPage, setCurrentPage] = useState(1);
+    const [archivedCurrentPage, setArchivedCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     const [selectedProduct, setSelectedProduct] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
     const [archivedSearchQuery, setArchivedSearchQuery] = useState('');
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
-
+    const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
+    const [selectedArchivedProductId, setSelectedArchivedProductId] = useState<number | null>(null);
+    const [selectedArchivedProductName, setSelectedArchivedProductName] = useState<string | null>(null);
     const { data, isLoading, refetch } = api.product.getProducts.useQuery({ page: currentPage, pageSize });
-    const { data: archivedData, isLoading: isLoadingArchived, refetch: refetchArchived } = api.product.getArchivedProducts.useQuery({ page: currentPage, pageSize });
+    const { data: archivedData, isLoading: isLoadingArchived, refetch: refetchArchived } = api.product.getArchivedProducts.useQuery({ page: archivedCurrentPage, pageSize });
     const { data: productHistory, refetch: refetchHistory } = api.product.getProductsHistory.useQuery({ product_id: selectedProduct });
     const { toast } = useToast();
 
@@ -54,11 +58,30 @@ const Products = () => {
                 description: getFormattedDate(),
             });
             refetch();
+            refetchArchived();
         },
         onError: () => {
             toast({
                 variant: "destructive",
                 title: "Failed to delete product. Please try again.",
+                description: getFormattedDate(),
+            });
+        },
+    });
+
+    const restoreProduct = api.product.restore.useMutation({
+        onSuccess: () => {
+            toast({
+                title: "Product restored successfully!",
+                description: getFormattedDate(),
+            });
+            refetch();
+            refetchArchived();
+        },
+        onError: () => {
+            toast({
+                variant: "destructive",
+                title: "Failed to restore product. Please try again.",
                 description: getFormattedDate(),
             });
         },
@@ -92,6 +115,20 @@ const Products = () => {
     const handleDelete = (id: number) => {
         setSelectedProductId(id);
         setIsDeleteDialogOpen(true);
+    };
+
+    const handleRestore = (id: number, name: string) => {
+        setSelectedArchivedProductId(id);
+        setSelectedArchivedProductName(name);
+        setIsRestoreDialogOpen(true);
+    };
+
+    const confirmRestore = () => {
+        if (selectedArchivedProductId !== null) {
+            restoreProduct.mutate({ id: selectedArchivedProductId });
+            setIsRestoreDialogOpen(false);
+            setSelectedArchivedProductId(null);
+        }
     };
 
     const confirmDelete = () => {
@@ -217,24 +254,45 @@ const Products = () => {
                                             <img src={product.image_url || '/path/to/default-image.jpg'} alt={product.name || 'Product image'} className="w-full h-32 object-cover" />
                                             <div className="space-y-1">
                                                 <h2 className="font-bold uppercase">{product.name}</h2>
-                                                <p>{product.categoryName}</p> {/* Display the mapped category name */}
-                                                {/* You can add more details here if needed */}
+                                                <p>{product.categoryName}</p>
                                             </div>
                                         </CardContent>
+                                        <CardFooter className="space-x-2">
+                                            <Button size="sm" variant="outline" onClick={() => handleRestore(product.id, product.name || '')}><Undo2 /></Button>
+                                        </CardFooter>
                                     </Card>
                                 ))}
                             </div>
                         )}
                         {archivedData?.totalProducts && Math.ceil(archivedData.totalProducts / pageSize) > 1 && (
                             <PaginationComponent
-                                currentPage={currentPage}
+                                currentPage={archivedCurrentPage}
                                 totalPages={Math.ceil(archivedData.totalProducts / pageSize)}
-                                onPageChange={setCurrentPage}
+                                onPageChange={setArchivedCurrentPage}
                             />
                         )}
                     </CardContent>
                 </Card>
             </TabsContent>
+
+            <DeleteDialog
+                isOpen={isDeleteDialogOpen}
+                selection="Product"
+                onConfirm={confirmDelete}
+                onCancel={() => setIsDeleteDialogOpen(false)}
+            />
+            <ViewDialog
+                isOpen={selectedProduct > 0}
+                productName={filteredProducts?.find(p => p.id === selectedProduct)?.name ?? ''}
+                history={productHistory}
+                onCancel={() => setSelectedProduct(0)}
+            />
+            <RestoreDialog
+                isOpen={isRestoreDialogOpen}
+                selection={selectedArchivedProductName || ''}
+                onConfirm={confirmRestore}
+                onCancel={() => setIsRestoreDialogOpen(false)}
+            />
         </Tabs>
     )
 }
