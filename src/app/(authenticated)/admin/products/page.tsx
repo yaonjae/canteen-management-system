@@ -25,6 +25,7 @@ const Products = () => {
     const [selectedProduct, setSelectedProduct] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
     const [archivedSearchQuery, setArchivedSearchQuery] = useState('');
+    const [isArchiveDelete, setIsArchiveDelete] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
     const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
@@ -55,6 +56,24 @@ const Products = () => {
         onSuccess: () => {
             toast({
                 title: "Product deleted successfully!",
+                description: getFormattedDate(),
+            });
+            refetch();
+            refetchArchived();
+        },
+        onError: () => {
+            toast({
+                variant: "destructive",
+                title: "Failed to delete product. Please try again.",
+                description: getFormattedDate(),
+            });
+        },
+    });
+
+    const deleteProductArchive = api.product.deleteArchive.useMutation({
+        onSuccess: () => {
+            toast({
+                title: "Product deleted permanently!",
                 description: getFormattedDate(),
             });
             refetch();
@@ -114,6 +133,13 @@ const Products = () => {
 
     const handleDelete = (id: number) => {
         setSelectedProductId(id);
+        setIsArchiveDelete(false);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const handleDeleteArchive = (id: number) => {
+        setSelectedProductId(id);
+        setIsArchiveDelete(true);
         setIsDeleteDialogOpen(true);
     };
 
@@ -133,9 +159,14 @@ const Products = () => {
 
     const confirmDelete = () => {
         if (selectedProductId !== null) {
-            deleteProduct.mutate({ id: selectedProductId });
+            if (isArchiveDelete) {
+                deleteProductArchive.mutate({ id: selectedProductId });
+            } else {
+                deleteProduct.mutate({ id: selectedProductId });
+            }
             setIsDeleteDialogOpen(false);
             setSelectedProductId(null);
+            setIsArchiveDelete(false);
         }
     };
 
@@ -259,6 +290,7 @@ const Products = () => {
                                         </CardContent>
                                         <CardFooter className="space-x-2">
                                             <Button size="sm" variant="outline" onClick={() => handleRestore(product.id, product.name || '')}><Undo2 /></Button>
+                                            <Button size="sm" variant="destructive" onClick={() => handleDeleteArchive(product.id)}><Trash /></Button>
                                         </CardFooter>
                                     </Card>
                                 ))}
@@ -278,6 +310,7 @@ const Products = () => {
             <DeleteDialog
                 isOpen={isDeleteDialogOpen}
                 selection="Product"
+                isPermanent={isArchiveDelete}
                 onConfirm={confirmDelete}
                 onCancel={() => setIsDeleteDialogOpen(false)}
             />

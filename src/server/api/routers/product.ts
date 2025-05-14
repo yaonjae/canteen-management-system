@@ -199,6 +199,14 @@ export const productRouter = createTRPCRouter({
       });
     }),
 
+  deleteArchive: publicProcedure
+    .input(z.object({ id: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.db.archivedProduct.delete({
+        where: { id: input.id },
+      });
+    }),
+
   restore: publicProcedure
     .input(z.object({ id: z.number().int() }))
     .mutation(async ({ ctx, input }) => {

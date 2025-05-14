@@ -9,16 +9,17 @@ interface DeleteDialogProps {
     selection: string
     onConfirm: () => void
     onCancel: () => void
+    isPermanent?: boolean;
 }
 
-const DeleteDialog: React.FC<DeleteDialogProps> = ({ isOpen, selection, onConfirm, onCancel }) => {
+const DeleteDialog: React.FC<DeleteDialogProps> = ({ isOpen, selection, onConfirm, onCancel, isPermanent }) => {
     return (
         <Dialog open={isOpen} onOpenChange={onCancel}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Confirm Deletion</DialogTitle>
                 </DialogHeader>
-                <p>Are you sure you want to delete this {selection}? This action cannot be undone.</p>
+                <p>Are you sure you want to delete this {selection}?{isPermanent && ' This action cannot be undone.'}</p>
                 <DialogFooter>
                     <Button variant="outline" onClick={onCancel}>Cancel</Button>
                     <Button variant="destructive" onClick={onConfirm}>Delete</Button>
